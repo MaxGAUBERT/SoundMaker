@@ -1,0 +1,96 @@
+@import url('https://fonts.googleapis.com/css2?family=Audiowide&family=Electrolize&family=Saira+Stencil+One&family=Silkscreen:wght@400;700&display=swap');
+
+
+#root {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 1rem;
+  text-align: center;
+}
+
+body {
+  background-color:rgb(34, 38, 46);
+}
+.no-indicator::before {
+  display: none !important;
+}
+
+/* Mobile et petits écrans */
+.container {
+  width: 100%;
+}
+
+/* Tablettes et PC portables */
+@media (min-width: 1480px) {
+  .container {
+    width: 100%;
+  }
+}
+
+/* Grands écrans */
+@media (min-width: 1200px) {
+  .container {
+    width: 80%;
+    max-width: 1200px;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@keyframes title-shadows {
+  from {
+    text-shadow: blue 1px 0 10px;
+  }
+  to {
+    text-shadow: red 1px 0 10px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+
