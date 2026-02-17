@@ -55,7 +55,7 @@ export default function TransportBar(){
                 </button>
 
 
-                <input className="w-20" type="number" value={bpm} step={50} min={10} max={300} onChange={(e) => setBpm(Number(e.target.value))}/>
+                <input className="w-20" type="number" value={bpm} step={20} min={10} max={300} onChange={(e) => setBpm(Number(e.target.value))}/>
             </div>
     
     )

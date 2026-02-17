@@ -213,7 +213,7 @@ export function TransportProvider({ children }) {
         loopRef.current = null;
       }
     };
-  }, [state.isPlaying, state.bpm, currentPatternID, width]);
+  }, [state.isPlaying, state.bpm, currentPatternID, width, state.currentStep]);
 
     useEffect(() => {
     if (!state.metronomeEnabled || !state.isPlaying) {

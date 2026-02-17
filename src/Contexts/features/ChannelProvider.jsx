@@ -1,6 +1,7 @@
 // Contexts/ChannelProvider.jsx
 import { createContext, useContext, useState } from 'react';
 import { useUndo } from '../../hooks/useUndo';
+import { DRUM_SAMPLES, DEFAULT_CHANNELS} from '../../hooks/useSamples';
 
 const ChannelContext = createContext();
 
@@ -20,12 +21,19 @@ export function ChannelProvider({ children }) {
 
   function createChannels() {
     return [
-      { id: 0, name: "Kick", grid: createGrid(), sampleUrl: null },
-      { id: 1, name: "Snare", grid: createGrid(), sampleUrl: null },
-      { id: 2, name: "Hihat", grid: createGrid(), sampleUrl: null },
-      { id: 3, name: "Clap", grid: createGrid(), sampleUrl: null },
+      { id: 0, name: "Kick", grid: createGrid(), sampleUrl: DRUM_SAMPLES.kick },
+      { id: 1, name: "Snare", grid: createGrid(), sampleUrl: DRUM_SAMPLES.snare  },
+      { id: 2, name: "Hihat", grid: createGrid(), sampleUrl: DRUM_SAMPLES.hihat },
+      { id: 3, name: "Clap", grid: createGrid(), sampleUrl: DRUM_SAMPLES.clap },
     ];
   }
+
+  function createChannels() {
+    return DEFAULT_CHANNELS.map(ch => ({
+        ...ch,
+        grid: createGrid(),
+    }));
+}
 
   function loadSample(e, channelId){
     const file = e.target.files[0];
