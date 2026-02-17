@@ -57,15 +57,6 @@ export default function ChannelRack() {
     e.dataTransfer.setData("text/plain", index);
   }
 
-  function handleDragEnter(e, index) {
-      e.preventDefault();
-
-      // ✅ Ne rien faire si on survole le channel source
-      if (dragIndexRef.current === index) return;
-
-      setDragOverIndex(index);
-    }
-
   function handleDragOver(e){
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";

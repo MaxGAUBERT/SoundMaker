@@ -63,7 +63,8 @@ export function ChannelProvider({ children }) {
     {
       id: 2,
       name: "P2",
-      ch: cloneChannels(createChannels())
+      ch: cloneChannels(createChannels()),
+      steps: width
     },
   ];
 
