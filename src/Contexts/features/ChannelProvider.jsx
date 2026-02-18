@@ -12,6 +12,13 @@ export function ChannelProvider({ children }) {
     return Array(width).fill(false);
   }
 
+  function cloneChannels(channels) {
+    return channels.map(ch => ({
+      ...ch,
+      grid: [...ch.grid]
+    }));
+  }
+
   function createChannels() {
     return [
       { id: 0, name: "Kick", grid: createGrid(), sampleUrl: DRUM_SAMPLES.kick },
@@ -21,12 +28,15 @@ export function ChannelProvider({ children }) {
     ];
   }
 
+  /*
   function createChannels() {
     return DEFAULT_CHANNELS.map(ch => ({
         ...ch,
         grid: createGrid(),
     }));
 }
+
+*/
 
   function loadSample(e, channelId){
     const file = e.target.files[0];
