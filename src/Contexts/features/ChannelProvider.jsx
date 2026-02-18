@@ -60,6 +60,33 @@ export function ChannelProvider({ children }) {
     console.log('Sample loaded:', file.name);
   }
 
+  function setState(data) {
+  if (!data) return;
+
+  if (typeof data.width === "number") {
+    updateWidth(data.width);
+  }
+
+  if (data.patterns) {
+    const restored = data.patterns.map(pattern => ({
+      id: pattern.id,
+      name: pattern.name,
+      steps: pattern.channels?.[0]?.grid?.length ?? width,
+      ch: pattern.channels.map(ch => ({
+        id: ch.id,
+        name: ch.name,
+        grid: [...ch.grid],
+        sampleUrl: ch.sampleUrl ?? null
+      }))
+    }));
+    setPatterns(restored);
+  }
+
+  if (typeof data.currentPatternID !== "undefined") {
+    setCurrentPatternID(data.currentPatternID);
+  }
+}
+
   // État initial
   const initialPatterns = [
     {
@@ -225,6 +252,13 @@ export function ChannelProvider({ children }) {
       });
     });
   }
+
+
+  function reset() {
+    updateWidth(16);
+    setPatterns(initialPatterns);
+    setCurrentPatternID(initialPatterns[0].id);
+  }
   
   const value = {
     width,
@@ -236,6 +270,7 @@ export function ChannelProvider({ children }) {
     currentPattern,
     toggleCell,
     clearCell,
+    reset,
     handleAddChannel,
     handleAddPattern,
     loadSample,
@@ -249,6 +284,8 @@ export function ChannelProvider({ children }) {
     getChannelStates,
     createGrid,
     undo, redo,
+    getChannelStates,
+    setState,
     canUndo, canRedo
   };
 
