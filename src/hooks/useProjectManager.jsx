@@ -14,7 +14,7 @@ export default function useProjectManager() {
   const collect = () => ({
     meta: { version: 1 },
 
-    channels:  channels.getChannelStates(),  // ✅ nom correct depuis ChannelProvider
+    channels:  channels.getChannelStates(), 
     playlist:  playlist.getState(),
     transport: transport.getState()
   });
@@ -55,7 +55,6 @@ export default function useProjectManager() {
 
     storage.setCurrentProjectId(id);
   };
-
 
   const newProject = () => {
     channels.reset();
