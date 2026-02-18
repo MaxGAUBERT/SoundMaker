@@ -1,4 +1,4 @@
-import { Component, useState } from 'react';
+import {useState } from 'react';
 import { useGlobalColorContext } from '../../Contexts/UI/GlobalColorContext';
 
 const SaveAsProjectModal = ({ onClose, onSaveAs }) => {
@@ -42,7 +42,7 @@ const SaveAsProjectModal = ({ onClose, onSaveAs }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-10" style={{backgroundColor: colorsComponent.BackgroundIO, color: colorsComponent.TextIO}}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-10" style={{backgroundColor: colorsComponent.Background, color: colorsComponent.Text}}>
       <div className="p-6 rounded-xl shadow-xl w-full max-w-md relative bg-white border">
         <h2 className="text-2xl font-bold mb-4 text-black">Save Project As</h2>
         

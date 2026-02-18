@@ -1,121 +1,126 @@
 import { createContext, useContext, useState } from "react";
+
 import { useChannels } from "../../Contexts/features/ChannelProvider";
+import useProjectManager from "../../hooks/useProjectManager";
+
 import NewProjectModal from "../../UI/Modals/NewProjectModal";
 import LoadProjectModal from "../../UI/Modals/LoadProjectModal";
 import SaveAsProjectModal from "../../UI/Modals/SaveAsProjectModal";
-import { useStorage } from "../system/StorageContext";
 
-const MenuActionsContext = createContext(null); 
+const MenuActionsContext = createContext(null);
 
-export function MenuActionsProvider({ children }) { 
-    const { undo, redo, canUndo, canRedo, getChannelStates } = useChannels();
-    const {createNewProject, loadProject, saveCurrentProject, collectProjectData} = useStorage();
-    const [showModal, setShowModal] = useState({
-        "New" : false,
-        "Save As": false,
-        "Load": false,
-        "Settings": false,
-        "Exit": false
-    });
-    
-    const actions = {
-        "New Project": () => {
-            setShowModal({"New": true});
-        },
-        "Load Project": () => {
-            setShowModal({"Load": true});
-        },
-        "Save": () => {
-            // ✅ Collecter toutes les données
-            const channelData = getChannelStates();
-            
-            const projectData = {
-                project: {
-                    bpm: 120, // À récupérer depuis TransportProvider si vous l'avez
-                    timeSignature: { numerator: 4, denominator: 4 },
-                    sampleRate: 44100,
-                    duration: 0,
-                },
-                channels: channelData.patterns, // Les patterns avec leurs channels
-                currentPatternID: channelData.currentPatternID,
-                width: channelData.width,
-                transport: {
-                    isPlaying: false,
-                    currentTime: 0,
-                    loopStart: 0,
-                    loopEnd: 0,
-                    loopEnabled: false,
-                },
-                arrangement: [],
-            };
-            
-            saveCurrentProject(projectData);
-            console.log("Project saved!", projectData);
-        },
-        "Save As": () => {
-            // Créer une copie du projet actuel
-            const projectData = collectProjectData;
-            createNewProject("Copy of Project");
-            saveCurrentProject(projectData);
-        },
-        "Settings": () => {
-            setShowModal({"Settings": true});
-        },
-        "Exit": () => {
-            console.log("Exit");
-        },
-        "Undo": () => undo(),
-        "Redo": () => redo()
-    };
+export function MenuActionsProvider({ children }) {
 
-    const executeAction = (actionKey) => {
-        const action = actions[actionKey];
-        
-        if (action) {
-            action();
-        } else {
-            console.warn(`Action "${actionKey}" not found`);
-        }
-    };
-    
-    const values = {
-        executeAction,
-        actions,
-        canUndo,
-        canRedo
-    };
+  const { undo, redo, canUndo, canRedo } = useChannels();
 
-    return (
-        <MenuActionsContext.Provider value={values}>
-            {children}
-            {showModal["New"] && (
-                <NewProjectModal 
-                    onClose={() => setShowModal({"New": false})}
-                    onCreate={createNewProject}
-                />
-            )}
+  const project = useProjectManager();
 
-            {showModal["Load"] && (
-                <LoadProjectModal 
-                    onClose={() => setShowModal({"Load": false})}
-                    onLoad={loadProject}
-                />
-            )}
+  const [showModal, setShowModal] = useState({
+    New: false,
+    Load: false,
+    SaveAs: false,
+    Settings: false,
+    Exit: false
+  });
 
-            {showModal["Save As"] && (
-                <SaveAsProjectModal 
-                    onClose={() => setShowModal({"Save As": false})}
-                    onSaveAs={saveCurrentProject}
-                />
-            )}
-        </MenuActionsContext.Provider>
-    );
+  // helper
+  const open = (key) =>
+    setShowModal(prev => ({ ...prev, [key]: true }));
+
+  const close = (key) =>
+    setShowModal(prev => ({ ...prev, [key]: false }));
+
+
+  const actions = {
+
+    "New Project": () => open("New"),
+
+    "Load Project": () => open("Load"),
+
+    "Save": () => project.save(),
+
+    "Save As": () => open("SaveAs"),
+
+    "Settings": () => open("Settings"),
+
+    "Exit": () => {
+      if (confirm("Exit without saving?")) window.close();
+    },
+
+    "Undo": undo,
+
+    "Redo": redo
+  };
+
+
+  const executeAction = (key) => {
+    const fn = actions[key];
+    if (fn) fn();
+    else console.warn("Unknown action:", key);
+  };
+
+
+  return (
+    <MenuActionsContext.Provider
+      value={{ executeAction, actions, canUndo, canRedo }}
+    >
+
+      {children}
+
+
+      {/* New Project */}
+      {showModal.New && (
+
+        <NewProjectModal
+          onClose={() => close("New")}
+
+          onCreate={(name) => {
+            project.newProject();
+            project.saveAs(name);
+            close("New");
+          }}
+        />
+      )}
+
+
+      {/* Load */}
+      {showModal.Load && (
+
+        <LoadProjectModal
+          onClose={() => close("Load")}
+
+          onLoad={(id) => {
+            project.load(id);
+            close("Load");
+          }}
+        />
+      )}
+
+
+      {/* Save As */}
+      {showModal.SaveAs && (
+
+        <SaveAsProjectModal
+          onClose={() => close("SaveAs")}
+
+          onSaveAs={(name) => {
+            project.saveAs(name);
+            close("SaveAs");
+          }}
+        />
+      )}
+
+    </MenuActionsContext.Provider>
+  );
 }
 
-export function useMenuActions() { 
-    const context = useContext(MenuActionsContext);
-    if (!context) {
-        throw new Error('useMenuActions must be used within MenuActionsProvider');
-    }
-    return context;
+
+export function useMenuActions() {
+
+  const ctx = useContext(MenuActionsContext);
+
+  if (!ctx)
+    throw new Error("useMenuActions must be used inside provider");
+
+  return ctx;
 }

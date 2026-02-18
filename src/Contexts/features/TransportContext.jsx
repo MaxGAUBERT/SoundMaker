@@ -98,10 +98,8 @@ export function TransportProvider({ children }) {
   const playersRef = useRef(new Map());
   const stepIndexRef = useRef(0);
 
-  // ✅ EFFET : Précharger tous les samples
   useEffect(() => {
     const loadSamples = async () => {
-      // Nettoyer les anciens players
       playersRef.current.forEach(player => player.dispose());
       playersRef.current.clear();
 
@@ -140,7 +138,7 @@ export function TransportProvider({ children }) {
       playersRef.current.forEach(player => player.dispose());
       playersRef.current.clear();
     };
-  }, [patterns, currentPatternID]);
+  }, [currentPatternID]);
 
   useEffect(() => {
     const startPlayback = async () => {
@@ -288,16 +286,35 @@ export function TransportProvider({ children }) {
   const setTimeSignature = (numerator, denominator) => 
     dispatch({ type: TRANSPORT_ACTIONS.SET_TIME_SIGNATURE, payload: { numerator, denominator } });
 
-  function getTransportStates() {
-    return {
-      bpm: state.bpm,
-      isPlaying: state.isPlaying,
-      currentStep: state.currentStep,
-      loopEnabled: state.loopEnabled,
-      metronomeEnabled: state.metronomeEnabled,
-      timeSignature: state.timeSignature,
-    };
-  }
+  function getState() {
+  return {
+    bpm: state.bpm,
+    timeSignature: state.timeSignature,
+    loopEnabled: state.loopEnabled,
+    metronomeEnabled: state.metronomeEnabled,
+  };
+}
+
+function setState(data) {
+  if (!data) return;
+
+  // stop playback à la restauration
+  stop();
+
+  if (typeof data.bpm === "number") dispatch({ type: TRANSPORT_ACTIONS.SET_BPM, payload: data.bpm });
+  if (data.timeSignature) dispatch({ type: TRANSPORT_ACTIONS.SET_TIME_SIGNATURE, payload: data.timeSignature });
+  if (typeof data.loopEnabled === "boolean" && data.loopEnabled !== state.loopEnabled) dispatch({ type: TRANSPORT_ACTIONS.TOGGLE_LOOP });
+  if (typeof data.metronomeEnabled === "boolean" && data.metronomeEnabled !== state.metronomeEnabled) dispatch({ type: TRANSPORT_ACTIONS.TOGGLE_METRONOME });
+}
+
+function reset() {
+  stop();
+  dispatch({ type: TRANSPORT_ACTIONS.SET_BPM, payload: 120 });
+  dispatch({ type: TRANSPORT_ACTIONS.SET_TIME_SIGNATURE, payload: { numerator: 4, denominator: 4 } });
+  // remettre loop + metronome à tes defaults
+}
+
+
 
   const value = {
     // État
@@ -312,7 +329,9 @@ export function TransportProvider({ children }) {
     setBpm,
     setCurrentStep,
     setTimeSignature,
-    getTransportStates
+    getState,
+    setState,
+    reset
   };
 
   return (

@@ -1,4 +1,3 @@
-// Contexts/features/PlaylistProvider.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const PlaylistContext = createContext(null);
@@ -60,69 +59,65 @@ export function PlaylistProvider({ children }) {
         setPHeight(height);
     }
 
-    // ✅ Fonction pour exporter l'état (pour sauvegarde)
-    function getPlaylistState() {
-        // Convertir la grille 2D en liste d'items avec positions
-        const items = [];
-        
-        playlistGrid.forEach((row, rowIdx) => {
-            row.forEach((patternId, colIdx) => {
-                if (patternId !== null) {
-                    items.push({
-                        id: `${rowIdx}-${colIdx}`, // ID unique basé sur la position
-                        patternId,
-                        row: rowIdx,
-                        col: colIdx,
-                        track: rowIdx,
-                        startTime: colIdx, // Position temporelle
-                    });
-                }
-            });
-        });
-
-        return {
-            width: pWidth,
-            height: pHeight,
-            grid: playlistGrid, // Sauvegarder la grille complète
-            items, // Liste formatée pour faciliter l'utilisation
-            selectedPatternId,
-        };
-    }
-
-    function loadPlaylistState(state) {
-        if (!state) return;
-
-        setPWidth(state.width || 64);
-        setPHeight(state.height || 8);
-        setSelectedPatternId(state.selectedPatternId || null);
-        
-        if (state.grid) {
-            setPlaylistGrid(state.grid);
-        }
-    }
-
-    const value = {
-        // État
-        playlistGrid,
+    function getState() {
+    return {
         pWidth,
         pHeight,
         selectedPatternId,
-        
-        // Setters
-        setPWidth,
-        setPHeight,
-        setSelectedPatternId,
-        setPlaylistDimensions,
-        
-        // Actions
-        placePattern,
-        clearCell,
-        clearPlaylist,
-        
-        // Import/Export
-        getPlaylistState,
-        loadPlaylistState,
+        playlistGrid: playlistGrid.map(row => [...row]),
     };
+    }
+
+    function reset() {
+    setPWidth(64);
+    setPHeight(8);
+    setSelectedPatternId(null);
+    setPlaylistGrid(Array.from({ length: 8 }, () => Array.from({ length: 64 }, () => null)));
+    }
+
+        function setState(data) {
+        if (!data) return;
+
+        const w = data.pWidth ?? 64;
+        const h = data.pHeight ?? 8;
+
+        setPWidth(w);
+        setPHeight(h);
+        setSelectedPatternId(data.selectedPatternId ?? null);
+
+        if (data.playlistGrid) {
+            // normaliser dimensions
+            const grid = Array.from({ length: h }, (_, r) =>
+            Array.from({ length: w }, (_, c) => data.playlistGrid?.[r]?.[c] ?? null)
+            );
+            setPlaylistGrid(grid);
+        } else {
+            // fallback vide
+            setPlaylistGrid(Array.from({ length: h }, () => Array.from({ length: w }, () => null)));
+        }
+        }
+
+        const value = {
+            // État
+            playlistGrid,
+            pWidth,
+            pHeight,
+            selectedPatternId,
+            
+            // Setters
+            setPWidth,
+            setPHeight,
+            setSelectedPatternId,
+            setPlaylistDimensions,
+            
+            // Actions
+            placePattern,
+            clearCell,
+            clearPlaylist,
+            
+            // Import/Export
+            getState, setState, reset
+        };
 
     return (
         <PlaylistContext.Provider value={value}>
