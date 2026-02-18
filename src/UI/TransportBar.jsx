@@ -3,16 +3,10 @@ import { IoPause, IoPlay, IoStop } from "react-icons/io5";
 import { PiMetronomeFill } from "react-icons/pi";
 
 
-
 export default function TransportBar(){
-    const {play, isPlaying,
-        pause,
-        stop,
-        toggleMetronome, metronomeEnabled,
-        toggleLoop, loopEnabled,
-        bpm,
-        setBpm
-    } = useTransport();
+    const { play, isPlaying, pause, stop, toggleMetronome, metronomeEnabled,
+        toggleLoop, loopEnabled, bpm, setBpm } = useTransport();
+
 
     return (
     
@@ -20,6 +14,8 @@ export default function TransportBar(){
                 <button onClick={play} disabled={isPlaying}>
                     <IoPlay title="Play"/>
                 </button>
+
+                  
 
                 <button onClick={pause} disabled={!isPlaying}>
                     <IoPause title="Pause"/>
@@ -54,8 +50,7 @@ export default function TransportBar(){
                 <span className="hidden md:inline">🔁 Loop</span>
                 </button>
 
-
-                <input className="w-20" type="number" value={bpm} step={20} min={10} max={300} onChange={(e) => setBpm(Number(e.target.value))}/>
+                <input className="w-20" type="number" value={bpm} step={20} min={30} max={300} onChange={(e) => setBpm(Number(e.target.value))}/>
             </div>
     
     )
