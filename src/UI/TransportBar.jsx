@@ -15,8 +15,6 @@ export default function TransportBar(){
                     <IoPlay title="Play"/>
                 </button>
 
-                  
-
                 <button onClick={pause} disabled={!isPlaying}>
                     <IoPause title="Pause"/>
                 </button>
