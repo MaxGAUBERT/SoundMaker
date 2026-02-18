@@ -12,13 +12,6 @@ export function ChannelProvider({ children }) {
     return Array(width).fill(false);
   }
 
-  function cloneChannels(channels) {
-    return channels.map(ch => ({
-      ...ch,
-      grid: [...ch.grid]
-    }));
-  }
-
   function createChannels() {
     return [
       { id: 0, name: "Kick", grid: createGrid(), sampleUrl: DRUM_SAMPLES.kick },
@@ -258,6 +251,7 @@ export function ChannelProvider({ children }) {
     updateWidth(16);
     setPatterns(initialPatterns);
     setCurrentPatternID(initialPatterns[0].id);
+
   }
   
   const value = {
