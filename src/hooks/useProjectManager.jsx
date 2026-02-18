@@ -14,9 +14,9 @@ export default function useProjectManager() {
   const collect = () => ({
     meta: { version: 1 },
 
-    channels:  channels.getState,
-    playlist:  playlist.getState,
-    transport: transport.getState
+    channels:  channels.getChannelStates(),  // ✅ nom correct depuis ChannelProvider
+    playlist:  playlist.getState(),
+    transport: transport.getState()
   });
 
 
@@ -26,7 +26,7 @@ export default function useProjectManager() {
 
     const data = collect();
 
-    storage.saveCurrentProject(data);
+    storage.saveProject(storage.currentProjectId, data);
   };
 
 
@@ -34,17 +34,12 @@ export default function useProjectManager() {
 
     const data = collect();
 
-    if (!storage.createProject(name, data)) {
+    const project = storage.createProject(name, data); // ✅ un seul appel
+
+    if (!project) {
       console.error("createProject failed");
       return;
     }
-
-    const project = storage.createProject(name);
-
-
-    storage.setCurrentProjectId(project.id);
-
-    storage.saveProject(project.id, data);
   };
 
 
@@ -63,10 +58,9 @@ export default function useProjectManager() {
 
 
   const newProject = () => {
-
-    channels.reset;
-    playlist.reset;
-    transport.reset;
+    channels.reset();
+    playlist.reset();
+    transport.reset();
 
     storage.setCurrentProjectId(null);
   };
