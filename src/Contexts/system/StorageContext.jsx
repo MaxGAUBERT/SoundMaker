@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
-
 const StorageContext = createContext(null);
 
 export function StorageProvider({ children }) {
@@ -26,7 +25,7 @@ export function StorageProvider({ children }) {
   }
 
   function createProject(name, data) {
-
+    // ✅ Crée l'objet directement, sans s'appeler elle-même
     const project = {
       id: crypto.randomUUID(),
       name,
@@ -45,7 +44,6 @@ export function StorageProvider({ children }) {
   }
 
   function saveProject(id, data) {
-
     const next = savedProjects.map(p =>
       p.id === id
         ? { ...p, updatedAt: Date.now(), data }
@@ -61,7 +59,6 @@ export function StorageProvider({ children }) {
   }
 
   function deleteProject(id) {
-
     const next = savedProjects.filter(p => p.id !== id);
 
     setSavedProjects(next);
@@ -81,17 +78,17 @@ export function StorageProvider({ children }) {
     deleteProject,
   };
 
-    return (
-        <StorageContext.Provider value={values}>
-            {children}
-        </StorageContext.Provider>
-    )
+  return (
+    <StorageContext.Provider value={values}>
+      {children}
+    </StorageContext.Provider>
+  );
 }
 
 export function useStorage() {
-    const context = useContext(StorageContext);
-    if (!context) {
-        throw new Error('useStorage must be used within StorageProvider');
-    }
-    return context;
+  const context = useContext(StorageContext);
+  if (!context) {
+    throw new Error('useStorage must be used within StorageProvider');
+  }
+  return context;
 }

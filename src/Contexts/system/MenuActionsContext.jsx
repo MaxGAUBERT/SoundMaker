@@ -13,7 +13,7 @@ export function MenuActionsProvider({ children }) {
 
   const { undo, redo, canUndo, canRedo } = useChannels();
 
-  const project = useProjectManager();
+  const { save, saveAs, load, newProject } = useProjectManager(); 
 
   const [showModal, setShowModal] = useState({
     New: false,
@@ -23,35 +23,19 @@ export function MenuActionsProvider({ children }) {
     Exit: false
   });
 
-  // helper
-  const open = (key) =>
-    setShowModal(prev => ({ ...prev, [key]: true }));
-
-  const close = (key) =>
-    setShowModal(prev => ({ ...prev, [key]: false }));
-
+  const open  = (key) => setShowModal(prev => ({ ...prev, [key]: true }));
+  const close = (key) => setShowModal(prev => ({ ...prev, [key]: false }));
 
   const actions = {
-
     "New Project": () => open("New"),
-
     "Load Project": () => open("Load"),
-
-    "Save": () => project.save(),
-
-    "Save As": () => open("SaveAs"),
-
-    "Settings": () => open("Settings"),
-
-    "Exit": () => {
-      if (confirm("Exit without saving?")) window.close();
-    },
-
-    "Undo": undo,
-
-    "Redo": redo
+    "Save":        () => save(),
+    "Save As":     () => open("SaveAs"),
+    "Settings":    () => open("Settings"),
+    "Exit":        () => { if (confirm("Exit without saving?")) window.close(); },
+    "Undo":        undo,
+    "Redo":        redo
   };
-
 
   const executeAction = (key) => {
     const fn = actions[key];
@@ -59,52 +43,41 @@ export function MenuActionsProvider({ children }) {
     else console.warn("Unknown action:", key);
   };
 
-
   return (
     <MenuActionsContext.Provider
       value={{ executeAction, actions, canUndo, canRedo }}
     >
-
       {children}
-
 
       {/* New Project */}
       {showModal.New && (
-
         <NewProjectModal
           onClose={() => close("New")}
-
           onCreate={(name) => {
-            project.newProject();
-            project.saveAs(name);
+            newProject();   
+            saveAs(name);   
             close("New");
           }}
         />
       )}
 
-
       {/* Load */}
       {showModal.Load && (
-
         <LoadProjectModal
           onClose={() => close("Load")}
-
           onLoad={(id) => {
-            project.load(id);
+            load(id);     
             close("Load");
           }}
         />
       )}
 
-
       {/* Save As */}
       {showModal.SaveAs && (
-
         <SaveAsProjectModal
           onClose={() => close("SaveAs")}
-
           onSaveAs={(name) => {
-            project.saveAs(name);
+            saveAs(name);   
             close("SaveAs");
           }}
         />
@@ -114,13 +87,8 @@ export function MenuActionsProvider({ children }) {
   );
 }
 
-
 export function useMenuActions() {
-
   const ctx = useContext(MenuActionsContext);
-
-  if (!ctx)
-    throw new Error("useMenuActions must be used inside provider");
-
+  if (!ctx) throw new Error("useMenuActions must be used inside provider");
   return ctx;
 }
