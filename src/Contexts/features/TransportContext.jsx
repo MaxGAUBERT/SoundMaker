@@ -162,7 +162,7 @@ export function TransportProvider({ children }) {
       const currentPattern = patterns.find(p => p.id === currentPatternID);
       if (!currentPattern) return;
 
-      let stepIndex = state.isPaused ? stepIndexRef.current : 0;
+      let stepIndex = state.isPaused ? stepIndexRef.current : state.currentStep;
 
       // Créer la boucle
       loopRef.current = new Tone.Loop((time) => {
@@ -211,7 +211,7 @@ export function TransportProvider({ children }) {
         loopRef.current = null;
       }
     };
-  }, [state.isPlaying, currentPatternID, width, state.bpm, state.currentStep]);
+  }, [state.isPlaying, currentPatternID, width]);
 
     useEffect(() => {
     if (!state.metronomeEnabled || !state.isPlaying) {
@@ -281,8 +281,8 @@ export function TransportProvider({ children }) {
   };
   const toggleMetronome = () => dispatch({ type: TRANSPORT_ACTIONS.TOGGLE_METRONOME });
   const toggleLoop = () => dispatch({ type: TRANSPORT_ACTIONS.TOGGLE_LOOP });
-  const setBpm = (bpm) => dispatch({ type: TRANSPORT_ACTIONS.SET_BPM, payload: state.bpm });
-  const setCurrentStep = (step) => {stepIndexRef.current = step; dispatch({ type: TRANSPORT_ACTIONS.SET_CURRENT_STEP, payload: state.step })};
+  const setBpm = (bpm) => dispatch({ type: TRANSPORT_ACTIONS.SET_BPM, payload: bpm });
+  const setCurrentStep = (step) => {stepIndexRef.current = step; dispatch({ type: TRANSPORT_ACTIONS.SET_CURRENT_STEP, payload: step })};
   const setTimeSignature = (numerator, denominator) => 
     dispatch({ type: TRANSPORT_ACTIONS.SET_TIME_SIGNATURE, payload: { numerator, denominator } });
 
@@ -298,7 +298,6 @@ export function TransportProvider({ children }) {
 function setState(data) {
   if (!data) return;
 
-  // stop playback à la restauration
   stop();
 
   if (typeof data.bpm === "number") dispatch({ type: TRANSPORT_ACTIONS.SET_BPM, payload: data.bpm });
