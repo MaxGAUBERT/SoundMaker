@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useStorage } from '../../Contexts/system/StorageContext';
+import { useGlobalColorContext } from '../../Contexts/UI/GlobalColorContext';
 
 export default function LoadProjectModal({ onClose, onLoad}) {
   const [selectedProjectId, setSelectedProjectId] = useState(null);
   const {savedProjects, deleteAllProject} = useStorage();
+  const {colorsComponent} = useGlobalColorContext();
 
   const handleLoadProject = (projectId) => {
     onLoad(projectId);
@@ -12,7 +14,7 @@ export default function LoadProjectModal({ onClose, onLoad}) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" >
-      <div className="p-6 rounded-xl shadow-xl w-full bg-gray-400 max-w-2xl max-h-[80vh] relative overflow-y-auto border">
+      <div style={{backgroundColor: colorsComponent.BackgroundIO, color: colorsComponent.Text}} className="p-6 rounded-xl shadow-xl w-full max-w-2xl max-h-[80vh] relative overflow-y-auto border">
         <h2 className="text-2xl font-bold mb-4">Load Project</h2>
          <button 
             onClick={(e) => {

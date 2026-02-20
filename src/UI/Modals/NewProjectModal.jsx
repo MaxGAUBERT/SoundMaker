@@ -1,8 +1,8 @@
 import { useState } from "react";
-//import { useGlobalColorContext } from "../../Contexts/GlobalColorContext";
+import { useGlobalColorContext } from '../../Contexts/UI/GlobalColorContext';
 
 export default function NewProjectModal({onClose, onCreate}) {
-  //const {colorsComponent} = useGlobalColorContext();
+  const {colorsComponent} = useGlobalColorContext();
   const [newProjectName, setNewProjectName] = useState("");
 
   const handleCreateProject = () => {
@@ -12,8 +12,8 @@ export default function NewProjectModal({onClose, onCreate}) {
   }
 
     return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className=" p-6 rounded-xl shadow-xl w-full max-w-md relative bg-white border">
+    <div className="fixed inset-0 z-50 flex items-center justify-center" >
+      <div style={{backgroundColor: colorsComponent.BackgroundIO, color: colorsComponent.Text}} className=" p-6 rounded-xl shadow-xl w-full max-w-md relative border z-50">
         <h2 className="text-2xl font-bold mb-4 text-black">Create New Project</h2>
         <form className="space-y-4 text-gray-600">
           <input
