@@ -6,6 +6,7 @@ import { IoAddCircle, IoAddOutline } from "react-icons/io5";
 import { MdDelete } from "react-icons/md";
 import { BsBarChartSteps } from "react-icons/bs";
 
+
 export default function ChannelRack() {
   const {width,
     setWidth,
@@ -17,7 +18,7 @@ export default function ChannelRack() {
     renameChannel,
     handleAddChannel,
     handleAddPattern,
-    loadSample, moveChannel, deleteChannel,
+    loadSample, resetSamples, moveChannel, deleteChannel,
     clearCell} = useChannels();
 
     const {colorsComponent} = useGlobalColorContext();
@@ -227,6 +228,15 @@ export default function ChannelRack() {
               className="mt-4 hover:bg-gray-700 px-4 py-2 rounded text-sm transition-colors w-13.5"
             >
               <IoAddCircle title="Add channels"/>
+            </button>
+
+            <button
+              onClick={resetSamples}
+              disabled={currentPattern.ch.every(ch => ch.sampleUrl === null)}
+              style={{ color: colorsComponent.Text, backgroundColor: colorsComponent.Background }}
+              className="mt-4 ml-2 hover:bg-gray-700 px-4 py-2 rounded text-sm"
+            >
+              Reset samples
             </button>
           </div>
         )}

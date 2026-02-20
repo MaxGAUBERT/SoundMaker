@@ -98,120 +98,155 @@ export function TransportProvider({ children }) {
   const playersRef = useRef(new Map());
   const stepIndexRef = useRef(0);
 
+  // Ref pour lire metronomeEnabled depuis la boucle audio sans la redémarrer
+  const metronomeEnabledRef = useRef(state.metronomeEnabled);
   useEffect(() => {
-    const loadSamples = async () => {
-      playersRef.current.forEach(player => player.dispose());
-      playersRef.current.clear();
-
-      const currentPattern = patterns.find(p => p.id === currentPatternID);
-      if (!currentPattern) return;
-
-      // Charger tous les samples du pattern actuel
-      const loadPromises = currentPattern.ch
-        .filter(channel => channel.sampleUrl)
-        .map(async (channel) => {
-          try {
-            const player = new Tone.Player({
-              url: channel.sampleUrl,
-              onload: () => {
-                console.log(`✅ Sample loaded: ${channel.name}`);
-              }
-            }).toDestination();
-
-            // Attendre que le player soit chargé
-            await Tone.loaded();
-            
-            playersRef.current.set(channel.id, player);
-          } catch (error) {
-            console.error(`❌ Error loading sample for ${channel.name}:`, error);
-          }
-        });
-
-      await Promise.all(loadPromises);
-      console.log(`✅ All samples loaded for pattern ${currentPatternID}`);
-    };
-
-    loadSamples();
-
-    return () => {
-      // Cleanup : disposer tous les players
-      playersRef.current.forEach(player => player.dispose());
-      playersRef.current.clear();
-    };
-  }, [currentPatternID]);
+    metronomeEnabledRef.current = state.metronomeEnabled;
+  }, [state.metronomeEnabled]);
 
   useEffect(() => {
-    const startPlayback = async () => {
-      if (!state.isPlaying) {
-        Tone.Transport.stop();
-        if (loopRef.current) {
-          loopRef.current.dispose();
-          loopRef.current = null;
-        }
-        dispatch({ 
-          type: TRANSPORT_ACTIONS.SET_CURRENT_STEP, 
-          payload: 0
-        });
-        return;
-      }
 
-      // Démarrer Tone.js
-      await Tone.start();
-      //Tone.Transport.bpm.value = state.bpm;
+  const loadSamples = async () => {
 
-      const currentPattern = patterns.find(p => p.id === currentPatternID);
-      if (!currentPattern) return;
+    playersRef.current.forEach(p => p.dispose());
+    playersRef.current.clear();
 
-      let stepIndex = state.isPaused ? stepIndexRef.current : state.currentStep;
+    const pattern = patterns.find(p => p.id === currentPatternID);
+    if (!pattern) return;
 
-      // Créer la boucle
-      loopRef.current = new Tone.Loop((time) => {
-        // Jouer les samples actifs
-        currentPattern.ch.forEach((channel) => {
-          if (channel.grid[stepIndex]) {
-            const player = playersRef.current.get(channel.id);
-            
-            if (player && player.loaded) {
-              const tempPlayer = new Tone.Player(player.buffer).toDestination();
-              tempPlayer.start(time);
-              
+    const loaders = pattern.ch
+      .filter(ch => ch.sampleUrl)
+      .map(ch => {
 
-              Tone.Transport.schedule(() => {
-                tempPlayer.dispose();
-              }, time + 1);
-            } else {
-              console.warn(`⚠️ Player not loaded for channel ${channel.name}`);
-            }
-          }
-        });
+        const player = new Tone.Player(ch.sampleUrl).toDestination();
+        playersRef.current.set(ch.id, player);
 
-        // Mettre à jour le step visuel
-        Tone.Draw.schedule(() => {
-          dispatch({ 
-            type: TRANSPORT_ACTIONS.SET_CURRENT_STEP, 
-            payload: stepIndex
-          });
-          stepIndexRef.current = stepIndex;
-        }, time);
+        return player.load();
+      });
 
-        stepIndex = (stepIndex + 1) % width;
+    await Promise.all(loaders);
 
-      }, "16n");
+    console.log("Samples ready");
+  };
 
-      loopRef.current.start(0);
-      Tone.Transport.start();
-    };
+  loadSamples();
 
-    startPlayback();
+  return () => {
+    playersRef.current.forEach(p => p.dispose());
+    playersRef.current.clear();
+  };
 
-    return () => {
+}, [currentPatternID, patterns]);
+
+  useEffect(() => {
+
+  const start = async () => {
+
+    if (!state.isPlaying) {
+
       Tone.Transport.stop();
+
       if (loopRef.current) {
         loopRef.current.dispose();
         loopRef.current = null;
       }
-    };
-  }, [state.isPlaying, currentPatternID, width]);
+
+      dispatch({
+        type: TRANSPORT_ACTIONS.SET_CURRENT_STEP,
+        payload: 0
+      });
+
+      return;
+    }
+
+    await Tone.start();
+
+    const pattern = patterns.find(p => p.id === currentPatternID);
+    if (!pattern) return;
+
+
+    if (!metronomeSynthRef.current) {
+
+      metronomeSynthRef.current = new Tone.Synth({
+        oscillator: { type: "square" },
+        envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.05 },
+        volume: -8
+      }).toDestination();
+    }
+
+
+    let step = stepIndexRef.current;
+
+
+    loopRef.current = new Tone.Loop((time) => {
+
+      // METRONOME
+      if (state.metronomeEnabled && step % 4 === 0) {
+
+        metronomeSynthRef.current.triggerAttackRelease(
+          step === 0 ? "C6" : "C5",
+          "16n",
+          time
+        );
+      }
+
+
+      // SAMPLES
+      pattern.ch.forEach(ch => {
+
+        if (!ch.grid[step]) return;
+
+        const player = playersRef.current.get(ch.id);
+
+        if (player?.loaded) {
+          player.start(time);
+        }
+      });
+
+
+      // UI
+      Tone.Draw.schedule(() => {
+
+        dispatch({
+          type: TRANSPORT_ACTIONS.SET_CURRENT_STEP,
+          payload: step
+        });
+
+        stepIndexRef.current = step;
+
+      }, time);
+
+
+      step = (step + 1) % width;
+
+    }, "16n");
+
+
+    loopRef.current.start(0);
+    Tone.Transport.start();
+  };
+
+
+  start();
+
+
+  return () => {
+
+    Tone.Transport.stop();
+
+    if (loopRef.current) {
+      loopRef.current.dispose();
+      loopRef.current = null;
+    }
+  };
+
+}, [
+  state.isPlaying,
+  state.metronomeEnabled,
+  currentPatternID,
+  state.currentStep,
+  width
+]);
 
     useEffect(() => {
     if (!state.metronomeEnabled || !state.isPlaying) {
@@ -243,12 +278,6 @@ export function TransportProvider({ children }) {
       }).toDestination();
     }
 
-    metronomeEventRef.current = Tone.Transport.scheduleRepeat((time) => {
-      if (metronomeSynthRef.current) {
-        metronomeSynthRef.current.triggerAttackRelease("C5", "16n", time);
-      }
-    }, "4n"); 
-
     return () => {
       if (metronomeEventRef.current) {
         Tone.Transport.clear(metronomeEventRef.current);
@@ -269,7 +298,7 @@ export function TransportProvider({ children }) {
   }, []); 
 
   useEffect(() => {
-    Tone.Transport.bpm.value = state.bpm;
+    Tone.Transport.bpm.rampTo(state.bpm, 0.1);
   }, [state.bpm]);
 
   // Actions helpers
@@ -310,15 +339,11 @@ function reset() {
   stop();
   dispatch({ type: TRANSPORT_ACTIONS.SET_BPM, payload: 120 });
   dispatch({ type: TRANSPORT_ACTIONS.SET_TIME_SIGNATURE, payload: { numerator: 4, denominator: 4 } });
-  // remettre loop + metronome à tes defaults
 }
-
-
 
   const value = {
     // État
     ...state,
-    
     // Actions
     play,
     pause,

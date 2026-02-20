@@ -5,7 +5,7 @@ import { PiMetronomeFill } from "react-icons/pi";
 
 export default function TransportBar(){
     const { play, isPlaying, pause, stop, toggleMetronome, metronomeEnabled,
-        toggleLoop, loopEnabled, bpm, setBpm } = useTransport();
+        toggleLoop, loopEnabled, bpm, setBpm, state} = useTransport();
 
 
     return (
@@ -48,7 +48,23 @@ export default function TransportBar(){
                 <span className="hidden md:inline">🔁 Loop</span>
                 </button>
 
-                <input className="w-20" type="number" value={bpm} step={20} min={30} max={300} onChange={(e) => setBpm(Number(e.target.value))}/>
+                <input
+                    type="number"
+                    value={bpm}
+                    min={5}
+                    max={300}
+                    step={1}
+                    onChange={(e) => {
+
+                        let v = Number(e.target.value);
+
+                        if (Number.isNaN(v)) return;
+
+                        v = Math.max(5, Math.min(300, v));
+
+                        setBpm(v);
+                }}
+                    />
             </div>
     
     )

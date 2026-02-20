@@ -1,5 +1,5 @@
 // Contexts/ChannelProvider.jsx
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { useUndo } from '../../hooks/useUndo';
 import { DRUM_SAMPLES, DEFAULT_CHANNELS} from '../../hooks/useSamples';
 
@@ -21,22 +21,30 @@ export function ChannelProvider({ children }) {
 
   function createChannels() {
     return [
-      { id: 0, name: "Kick", grid: createGrid(), sampleUrl: DRUM_SAMPLES.kick },
-      { id: 1, name: "Snare", grid: createGrid(), sampleUrl: DRUM_SAMPLES.snare  },
-      { id: 2, name: "Hihat", grid: createGrid(), sampleUrl: DRUM_SAMPLES.hihat },
-      { id: 3, name: "Clap", grid: createGrid(), sampleUrl: DRUM_SAMPLES.clap },
+      { id: 0, name: "Kick", grid: createGrid(), sampleUrl: resetSamples ? DRUM_SAMPLES.kick : null },
+      { id: 1, name: "Snare", grid: createGrid(), sampleUrl: resetSamples ? DRUM_SAMPLES.snare : null },
+      { id: 2, name: "Hihat", grid: createGrid(), sampleUrl: resetSamples ? DRUM_SAMPLES.hihat : null},
+      { id: 3, name: "Clap", grid: createGrid(), sampleUrl: resetSamples ? DRUM_SAMPLES.clap : null },
     ];
   }
 
-  /*
-  function createChannels() {
-    return DEFAULT_CHANNELS.map(ch => ({
-        ...ch,
-        grid: createGrid(),
-    }));
-}
+  function resetSamples() {
+  setPatterns(draft => {
 
-*/
+    draft.forEach(pattern => {
+
+      pattern.ch.forEach(channel => {
+
+        const defaultSample = DEFAULT_CHANNELS
+          .find(d => d.id === channel.id);
+
+        channel.sampleUrl = defaultSample?.sampleUrl ?? null;
+      });
+
+    });
+
+  });
+}
 
   function loadSample(e, channelId){
     const file = e.target.files[0];
@@ -51,7 +59,7 @@ export function ChannelProvider({ children }) {
       draft.forEach(pattern => {
         const channel = pattern.ch.find(p => p.id === channelId);
         if (channel){
-          if (channel.sampleUrl) {
+          if (channel.sampleUrl?.startsWith('blob:')) {
             URL.revokeObjectURL(channel.sampleUrl);
           }
 
@@ -263,6 +271,10 @@ export function ChannelProvider({ children }) {
     setCurrentPatternID(initialPatterns[0].id);
 
   }
+
+  useEffect(() => {
+    createChannels();
+  }, [resetSamples]);
   
   const value = {
     width,
@@ -283,6 +295,7 @@ export function ChannelProvider({ children }) {
     deleteChannel,
     cloneChannels,
     createChannels,
+    resetSamples,
     moveChannel,
     deleteChannel,
     getChannelStates,
