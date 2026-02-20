@@ -1,9 +1,59 @@
 // components/Playlist.jsx
-import { useMemo, useCallback} from "react";
+import { useMemo, useCallback, useState} from "react";
 import { useChannels } from "../Contexts/features/ChannelProvider";
 import { usePlaylist } from "../Contexts/features/PlaylistProvider";
 import { useGlobalColorContext } from "../Contexts/UI/GlobalColorContext";
 import { RxWidth, RxHeight } from "react-icons/rx";
+
+
+function TrackLabel({ track, colorsComponent, renameTracks }) {
+    const [isRenaming, setIsRenaming] = useState(false);
+    const [trackName, setTrackName] = useState(track.name);
+
+    function startRename() {
+        setTrackName(track.name);
+        setIsRenaming(true);
+    }
+
+    function commitRename() {
+        renameTracks(track.id, trackName);
+        setIsRenaming(false);
+    }
+
+    if (isRenaming) {
+        return (
+            <input
+                type="text"
+                value={trackName}
+                onChange={(e) => setTrackName(e.target.value)}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter") commitRename();
+                    if (e.key === "Escape") setIsRenaming(false);
+                }}
+                autoFocus
+                style={{
+                    color: colorsComponent.Text,
+                    backgroundColor: colorsComponent.Background
+                }}
+                className="w-20 text-sm sticky left-0 z-10 px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+        );
+    }
+
+    return (
+        <span
+            onDoubleClick={startRename}
+            style={{
+                color: colorsComponent.Text,
+                backgroundColor: colorsComponent.Background
+            }}
+            className="w-20 text-sm sticky left-0 z-10 flex items-center cursor-pointer hover:bg-gray-700 transition-colors"
+            title="Double-click to rename"
+        >
+            {track.name}
+        </span>
+    );
+}
 
 export default function Playlist() {
     const { patterns, setCurrentPatternID } = useChannels();
@@ -18,7 +68,9 @@ export default function Playlist() {
         setSelectedPatternId,
         placePattern,
         clearCell,
+        renameTracks
     } = usePlaylist();
+
 
     const openPatternInEditor = useCallback((patternId) => {
     setCurrentPatternID(patternId);
@@ -63,71 +115,71 @@ export default function Playlist() {
     }, [patterns]);
 
     const gridRows = useMemo(() => (
+        console.log("playlistGrid:", playlistGrid),
+        playlistGrid.map((track, rIdx) => {
 
-    console.log("playlistGrid:", playlistGrid),
-  playlistGrid.map((track, rIdx) => {
+        const grid = track?.grid;
 
-    const grid = track.grid ?? [];
+            return (
 
-    return (
+                <div key={track.id} className="flex hover:bg-gray-800/50">
 
-      <div key={track.id} className="flex hover:bg-gray-800/50">
+                        {/* Track label */}
+                        <TrackLabel
+                            track={track}
+                            colorsComponent={colorsComponent}
+                            renameTracks={renameTracks}
+                        />
 
-        {/* Track label */}
-        <div className="w-20 bg-gray-900 italic text-white text-xs flex items-center justify-center sticky left-0 z-10 border-r border-b border-gray-700">
-          {track.name}
-        </div>
+            {/* Cells */}
+            {grid.map((cellPatternId, cIdx) => {
 
-        {/* Cells */}
-        {grid.map((cellPatternId, cIdx) => {
+            const pattern = patternMap[cellPatternId];
+            const isSelected = cellPatternId === selectedPatternId;
 
-          const pattern = patternMap[cellPatternId];
-          const isSelected = cellPatternId === selectedPatternId;
+            return (
 
-          return (
+                <div
+                key={`${track.id}-${cIdx}`}
 
-            <div
-              key={`${track.id}-${cIdx}`}
+                onClick={() => placePattern(rIdx, cIdx)}
 
-              onClick={() => placePattern(rIdx, cIdx)}
+                onContextMenu={(e) => {
+                    e.preventDefault();
+                    clearCell(rIdx, cIdx);
+                }}
 
-              onContextMenu={(e) => {
-                e.preventDefault();
-                clearCell(rIdx, cIdx);
-              }}
+                onDoubleClick={() => {
+                    if (cellPatternId) {
+                    openPatternInEditor(cellPatternId);
+                    }
+                }}
 
-              onDoubleClick={() => {
-                if (cellPatternId) {
-                  openPatternInEditor(cellPatternId);
-                }
-              }}
+                className={`
+                    w-8 h-14 border-r border-b cursor-pointer transition-all
+                    ${cIdx % 4 === 0 ? 'border-r-gray-500' : 'border-r-gray-700'}
+                    border-b-gray-700
+                    ${cellPatternId
+                    ? `bg-gradient-to-b from-green-500 to-green-600 hover:from-green-400 hover:to-green-500 ${
+                        isSelected ? 'ring-2 ring-blue-400 ring-inset' : ''
+                        }`
+                    : 'bg-gray-800 hover:bg-gray-700'
+                    }
+                `}
 
-              className={`
-                w-8 h-14 border-r border-b cursor-pointer transition-all
-                ${cIdx % 4 === 0 ? 'border-r-gray-500' : 'border-r-gray-700'}
-                border-b-gray-700
-                ${cellPatternId
-                  ? `bg-gradient-to-b from-green-500 to-green-600 hover:from-green-400 hover:to-green-500 ${
-                      isSelected ? 'ring-2 ring-blue-400 ring-inset' : ''
-                    }`
-                  : 'bg-gray-800 hover:bg-gray-700'
-                }
-              `}
+                title={pattern?.name ?? "Empty"}
+                >
 
-              title={pattern?.name ?? "Empty"}
-            >
-
-              {pattern && (
-                <div className="text-[9px] text-red-500 font-bold text-center leading-tight pt-1">
-                  {pattern.name}
+                {pattern && (
+                    <div className="text-[9px] font-bold text-center leading-tight pt-1">
+                    {pattern.name}
+                    </div>
+                )}
                 </div>
-              )}
-
-            </div>
-          );
-        })}
-      </div>
-    );
+            );
+            })}
+        </div>
+        );
   })
 
 ), [
@@ -136,7 +188,9 @@ export default function Playlist() {
   patternMap,
   placePattern,
   clearCell,
-  openPatternInEditor
+  openPatternInEditor,
+  colorsComponent,
+  renameTracks
 ]);
 
     return (
@@ -162,7 +216,7 @@ export default function Playlist() {
                         </label>
                         <input
                             type="range"
-                            min={16}
+                            min={8}
                             max={128}
                             value={pWidth}
                             onChange={(e) => setPWidth(Number(e.target.value))}
@@ -178,8 +232,8 @@ export default function Playlist() {
                         </label>
                         <input
                             type="range"
-                            min={4}
-                            max={32}
+                            min={8}
+                            max={128}
                             value={pHeight}
                             onChange={(e) => setPHeight(Number(e.target.value))}
                             className="w-full"

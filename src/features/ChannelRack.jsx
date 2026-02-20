@@ -186,12 +186,13 @@ export default function ChannelRack() {
                       accept="audio/*" 
                       title="Load Sample"
                       onChange={(e) => loadSample(e, ch.id)} 
-                      className="text-xs text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-1 file:text-xs file:bg-gray-700 file:text-white hover:file:bg-gray-600"
+                      style={{color: colorsComponent.Text}}
+                      className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-1 file:text-xs file:bg-gray-700 file:text-white hover:file:bg-gray-600"
                   />
 
                   <button disabled={!canDelete} title={canDelete ? "Delete channel" : "Cannot delete channel (minimum 2 channels required)"}
                     onClick={() => deleteChannel(ch.id)}>
-                    <MdDelete title="Delete channel" className="text-gray-400 hover:text-red-500 transition-colors"/>
+                    <MdDelete title="Delete channel" style={{color: colorsComponent.Text}} className=" hover:text-red-500 transition-colors"/>
                   </button>
 
                     <div className="flex gap-1">
