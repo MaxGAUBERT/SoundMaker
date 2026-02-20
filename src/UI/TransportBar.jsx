@@ -9,7 +9,6 @@ export default function TransportBar(){
     const { play, isPlaying, pause, stop, toggleMetronome, metronomeEnabled,
         toggleLoop, loopEnabled, bpm, setBpm, mode, setMode} = useTransport();
 
-
     return (
     
             <div className="flex flex-row">
@@ -64,13 +63,9 @@ export default function TransportBar(){
                     max={300}
                     step={1}
                     onChange={(e) => {
-
                         let v = Number(e.target.value);
-
                         if (Number.isNaN(v)) return;
-
                         v = Math.max(5, Math.min(300, v));
-
                         setBpm(v);
                 }}
                     />
