@@ -1,5 +1,5 @@
 // components/Playlist.jsx
-import { useMemo } from "react";
+import { useMemo, useCallback} from "react";
 import { useChannels } from "../Contexts/features/ChannelProvider";
 import { usePlaylist } from "../Contexts/features/PlaylistProvider";
 import { useGlobalColorContext } from "../Contexts/UI/GlobalColorContext";
@@ -20,9 +20,9 @@ export default function Playlist() {
         clearCell,
     } = usePlaylist();
 
-    function openPatternInEditor(patternId) {
-        setCurrentPatternID(patternId);
-    }
+    const openPatternInEditor = useCallback((patternId) => {
+    setCurrentPatternID(patternId);
+    }, [setCurrentPatternID]);
 
     const headerRow = useMemo(() => (
         <div 
@@ -39,7 +39,7 @@ export default function Playlist() {
                 }} 
                 className="w-20 border-r flex items-center justify-center text-xs"
             >
-                Tracks
+                {""}
             </div>
             {Array.from({ length: pWidth }).map((_, i) => (
                 <div
@@ -53,53 +53,91 @@ export default function Playlist() {
             ))}
         </div>
     ), [pWidth, colorsComponent]);
+    
+    const patternMap = useMemo(() => {
+        const map = {};
+        patterns.forEach(p => {
+            map[p.id] = p;
+        });
+        return map;
+    }, [patterns]);
 
     const gridRows = useMemo(() => (
-        playlistGrid.map((row, rIdx) => (
-            <div key={rIdx} className="flex hover:bg-gray-800/50">
-                <div className="w-20 bg-gray-900 text-white text-xs flex items-center justify-center sticky left-0 z-10 border-r border-b border-gray-700">
-                    Track {rIdx + 1}
+
+    console.log("playlistGrid:", playlistGrid),
+  playlistGrid.map((track, rIdx) => {
+
+    const grid = track.grid ?? [];
+
+    return (
+
+      <div key={track.id} className="flex hover:bg-gray-800/50">
+
+        {/* Track label */}
+        <div className="w-20 bg-gray-900 italic text-white text-xs flex items-center justify-center sticky left-0 z-10 border-r border-b border-gray-700">
+          {track.name}
+        </div>
+
+        {/* Cells */}
+        {grid.map((cellPatternId, cIdx) => {
+
+          const pattern = patternMap[cellPatternId];
+          const isSelected = cellPatternId === selectedPatternId;
+
+          return (
+
+            <div
+              key={`${track.id}-${cIdx}`}
+
+              onClick={() => placePattern(rIdx, cIdx)}
+
+              onContextMenu={(e) => {
+                e.preventDefault();
+                clearCell(rIdx, cIdx);
+              }}
+
+              onDoubleClick={() => {
+                if (cellPatternId) {
+                  openPatternInEditor(cellPatternId);
+                }
+              }}
+
+              className={`
+                w-8 h-14 border-r border-b cursor-pointer transition-all
+                ${cIdx % 4 === 0 ? 'border-r-gray-500' : 'border-r-gray-700'}
+                border-b-gray-700
+                ${cellPatternId
+                  ? `bg-gradient-to-b from-green-500 to-green-600 hover:from-green-400 hover:to-green-500 ${
+                      isSelected ? 'ring-2 ring-blue-400 ring-inset' : ''
+                    }`
+                  : 'bg-gray-800 hover:bg-gray-700'
+                }
+              `}
+
+              title={pattern?.name ?? "Empty"}
+            >
+
+              {pattern && (
+                <div className="text-[9px] text-red-500 font-bold text-center leading-tight pt-1">
+                  {pattern.name}
                 </div>
+              )}
 
-                {row.map((cellPatternId, cIdx) => {
-                    const pattern = patterns.find(p => p.id === cellPatternId);
-                    const isSelected = cellPatternId === selectedPatternId;
-
-                    return (
-                        <div
-                            key={cIdx}
-                            onClick={() => placePattern(rIdx, cIdx)}
-                            onContextMenu={(e) => {
-                                e.preventDefault();
-                                clearCell(rIdx, cIdx);
-                            }}
-                            onDoubleClick={() => {
-                                if (cellPatternId) {
-                                    openPatternInEditor(cellPatternId);
-                                }
-                            }}
-                            className={`
-                                w-8 h-14 border-r border-b cursor-pointer transition-all
-                                ${cIdx % 4 === 0 ? 'border-r-gray-500' : 'border-r-gray-700'}
-                                border-b-gray-700
-                                ${cellPatternId
-                                    ? `bg-gradient-to-b from-green-500 to-green-600 hover:from-green-400 hover:to-green-500 ${isSelected ? 'ring-2 ring-blue-400 ring-inset' : ''}`
-                                    : 'bg-gray-800 hover:bg-gray-700'
-                                }
-                            `}
-                            title={pattern ? pattern.name : 'Empty'}
-                        >
-                            {pattern && (
-                                <div className="text-[9px] text-red-500 font-bold text-center w-100 leading-tight pt-1">
-                                    {pattern.name}
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
             </div>
-        ))
-    ), [playlistGrid, selectedPatternId, patterns, placePattern, clearCell]);
+          );
+        })}
+      </div>
+    );
+  })
+
+), [
+  playlistGrid,
+  selectedPatternId,
+  patternMap,
+  placePattern,
+  clearCell,
+  openPatternInEditor
+]);
 
     return (
         <div className="flex flex-col h-full">

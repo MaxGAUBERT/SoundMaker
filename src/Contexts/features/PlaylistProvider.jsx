@@ -8,42 +8,63 @@ export function PlaylistProvider({ children }) {
     const [selectedPatternId, setSelectedPatternId] = useState(null);
 
     const [playlistGrid, setPlaylistGrid] = useState(
-        Array.from({ length: pHeight }, () =>
-            Array.from({ length: pWidth }, () => null)
-        )
+    Array.from({ length: pHeight }, (_, i) => ({
+        id: i,
+        name: `Track ${i + 1}`,
+        grid: Array.from({ length: pWidth }, () => false)
+    }))
     );
 
-    // Mettre à jour la grille quand les dimensions changent
     useEffect(() => {
-        setPlaylistGrid(prev => {
-            const newGrid = Array.from({ length: pHeight }, (_, rIdx) =>
-                Array.from({ length: pWidth }, (_, cIdx) => {
-                    if (prev[rIdx] && prev[rIdx][cIdx] !== undefined) {
-                        return prev[rIdx][cIdx];
-                    }
-                    return null;
-                })
-            );
-            return newGrid;
-        });
+    setPlaylistGrid(prev =>
+        Array.from({ length: pHeight }, (_, r) => {
+
+        const old = prev[r];
+
+        return {
+            id: r,
+            name: old?.name ?? `Track ${r + 1}`,
+            grid: Array.from({ length: pWidth }, (_, c) =>
+            old?.grid?.[c] ?? null
+            ),
+        };
+        })
+    );
     }, [pWidth, pHeight]);
 
     function placePattern(rowIdx, colIdx, patternId = selectedPatternId) {
-        if (!patternId) return;
 
-        setPlaylistGrid(prev => {
-            const newGrid = prev.map(row => [...row]);
-            newGrid[rowIdx][colIdx] = patternId;
-            return newGrid;
-        });
+    if (!patternId) return;
+
+    setPlaylistGrid(prev =>
+        prev.map((track, r) =>
+        r === rowIdx
+            ? {
+                ...track,
+                grid: track.grid.map((cell, c) =>
+                c === colIdx ? patternId : cell
+                ),
+            }
+            : track
+        )
+    );
     }
 
     function clearCell(rowIdx, colIdx) {
-        setPlaylistGrid(prev => {
-            const newGrid = prev.map(row => [...row]);
-            newGrid[rowIdx][colIdx] = null;
-            return newGrid;
-        });
+    setPlaylistGrid(prev =>
+        prev.map((track, r) =>
+
+        r === rowIdx
+            ? {
+                ...track,
+                grid: track.grid.map((cell, c) =>
+                c === colIdx ? null : cell
+                )
+            }
+            : track
+        )
+    );
+
     }
 
     function clearPlaylist() {

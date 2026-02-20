@@ -11,6 +11,7 @@ const TRANSPORT_ACTIONS = {
   STOP: 'STOP',
   TOGGLE_METRONOME: 'TOGGLE_METRONOME',
   TOGGLE_LOOP: 'TOGGLE_LOOP',
+  SET_MODE: "SET_MODE",
   SET_BPM: 'SET_BPM',
   SET_CURRENT_STEP: 'SET_CURRENT_STEP',
   SET_TIME_SIGNATURE: 'SET_TIME_SIGNATURE',
@@ -22,6 +23,7 @@ const initialState = {
   isPaused: false,
   currentStep: 0,
   bpm: 130,
+  mode: "pattern", 
   metronomeEnabled: false,
   loopEnabled: true,
   timeSignature: { numerator: 4, denominator: 4 },
@@ -62,6 +64,12 @@ function transportReducer(state, action) {
       return {
         ...state,
         loopEnabled: !state.loopEnabled,
+      };
+
+    case TRANSPORT_ACTIONS.SET_MODE:
+      return {
+        ...state,
+        mode: action.payload
       };
 
     case TRANSPORT_ACTIONS.SET_BPM:
@@ -312,6 +320,7 @@ export function TransportProvider({ children }) {
   const toggleLoop = () => dispatch({ type: TRANSPORT_ACTIONS.TOGGLE_LOOP });
   const setBpm = (bpm) => dispatch({ type: TRANSPORT_ACTIONS.SET_BPM, payload: bpm });
   const setCurrentStep = (step) => {stepIndexRef.current = step; dispatch({ type: TRANSPORT_ACTIONS.SET_CURRENT_STEP, payload: step })};
+  const setMode = (mode) => dispatch({ type: TRANSPORT_ACTIONS.SET_MODE, payload: mode });
   const setTimeSignature = (numerator, denominator) => 
     dispatch({ type: TRANSPORT_ACTIONS.SET_TIME_SIGNATURE, payload: { numerator, denominator } });
 
@@ -341,6 +350,10 @@ function reset() {
   dispatch({ type: TRANSPORT_ACTIONS.SET_TIME_SIGNATURE, payload: { numerator: 4, denominator: 4 } });
 }
 
+function switchMode(mode) {
+  dispatch({ type: TRANSPORT_ACTIONS.SET_MODE, payload: mode });
+}
+
   const value = {
     // État
     ...state,
@@ -348,6 +361,7 @@ function reset() {
     play,
     pause,
     stop,
+    setMode,
     toggleMetronome,
     toggleLoop,
     setBpm,
@@ -355,7 +369,7 @@ function reset() {
     setTimeSignature,
     getState,
     setState,
-    reset
+    reset,
   };
 
   return (

@@ -1,26 +1,35 @@
 import { useTransport } from "../Contexts/features/TransportContext"
 import { IoPause, IoPlay, IoStop } from "react-icons/io5";
 import { PiMetronomeFill } from "react-icons/pi";
-
+import { SlLoop } from "react-icons/sl";
+import { FaItunesNote } from "react-icons/fa";
+import { BiSolidPlaylist } from "react-icons/bi";
 
 export default function TransportBar(){
     const { play, isPlaying, pause, stop, toggleMetronome, metronomeEnabled,
-        toggleLoop, loopEnabled, bpm, setBpm, state} = useTransport();
+        toggleLoop, loopEnabled, bpm, setBpm, mode, setMode} = useTransport();
 
 
     return (
     
             <div className="flex flex-row">
-                <button onClick={play} disabled={isPlaying}>
+                <button onClick={play} disabled={isPlaying} title="Play">
+                    
                     <IoPlay title="Play"/>
                 </button>
 
-                <button onClick={pause} disabled={!isPlaying}>
+                <button onClick={pause} disabled={!isPlaying} title="Pause">
                     <IoPause title="Pause"/>
                 </button>
 
-                <button onClick={stop}>
+                <button onClick={stop} title="stop">
                     <IoStop title="Stop"/>
+                </button>
+
+                <button
+                onClick={() => setMode(mode === "pattern" ? "song" : "pattern")}
+                >
+                {mode === "pattern" ? <FaItunesNote title="pattern mode"/> : <BiSolidPlaylist title="song mode"/>}
                 </button>
 
                 <button
@@ -44,8 +53,8 @@ export default function TransportBar(){
                 }`}
                 title="Loop"
                 >
-                <span className="md:hidden">🔁</span>
-                <span className="hidden md:inline">🔁 Loop</span>
+                <span className="md:hidden"><SlLoop title="Loop"/></span>
+                <span className="hidden md:inline"><SlLoop title="Loop"/></span>
                 </button>
 
                 <input
