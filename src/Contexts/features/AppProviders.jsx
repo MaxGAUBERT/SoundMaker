@@ -6,6 +6,7 @@ import GlobalColorContextProvider from '../UI/GlobalColorContext';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { StorageProvider } from '../system/StorageContext';
 import { PlaylistProvider } from './PlaylistProvider';
+import { UndoManagerProvider } from '../system/UndoManagerContext';
 
 function KeyboardShortcutsWrapper({ children }) {
   useKeyboardShortcuts(); 
@@ -16,6 +17,7 @@ export default function AppProviders({ children }) {
   return (
     <StorageProvider> 
       <GlobalColorContextProvider>
+        <UndoManagerProvider>
         <ChannelProvider>  
           <PlaylistProvider>
           <TransportProvider>  
@@ -27,6 +29,7 @@ export default function AppProviders({ children }) {
           </TransportProvider>
           </PlaylistProvider>
         </ChannelProvider>
+        </UndoManagerProvider>
       </GlobalColorContextProvider>
     </StorageProvider>
   );
