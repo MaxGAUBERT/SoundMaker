@@ -56,8 +56,7 @@ export function useUndoManager(initialState, maxHistory = 100) {
     });
 
     const state = history[index];
-
-    // setter scopé : setScoped('channel', draft => { ... })
+    
     const setScoped = useCallback((scope, updater) => {
         dispatch({ type: 'SET', scope, updater, maxHistory });
     }, [maxHistory]);
