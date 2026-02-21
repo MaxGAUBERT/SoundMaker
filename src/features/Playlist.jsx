@@ -16,6 +16,8 @@ function TrackLabel({ track, colorsComponent, renameTracks }) {
     }
 
     function commitRename() {
+        if (trackName.trim() === "" || trackName.length > 10) return;
+        
         renameTracks(track.id, trackName);
         setIsRenaming(false);
     }
