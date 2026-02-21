@@ -9,7 +9,6 @@ const SaveAsProjectModal = ({ onClose, onSaveAs }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Validation du nom
     const trimmedName = projectName.trim();
     
     if (!trimmedName) {
@@ -26,18 +25,16 @@ const SaveAsProjectModal = ({ onClose, onSaveAs }) => {
       setError('Project name must be less than 50 characters');
       return;
     }
-    
-    // Réinitialiser l'erreur
+  
     setError('');
     
-    // Appeler la fonction de sauvegarde avec le nom
+
     onSaveAs(trimmedName);
     onClose();
   };
 
   const handleInputChange = (e) => {
     setProjectName(e.target.value);
-    // Effacer l'erreur quand l'utilisateur tape
     if (error) setError('');
   };
 
