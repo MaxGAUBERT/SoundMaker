@@ -38,9 +38,10 @@ export default function App() {
       <div style={{fontFamily: "Tomorrow, sans-serif"}} className="flex flex-col h-screen bg-gray-900 overflow-hidden">
         {/* Menu supérieur */}
         <div className="border-b flex-shrink-0 z-50">
+          <label className="text-gray-400 font-bold top-0 right-0 text-xl absolute italic">Sound maker</label>
           <StripMenu />
           {/* TransportBar fixe en haut */}
-          <div className="fixed top-0 right-100 z-50 bg-gray-900 border-b-1 border-gray-500">
+          <div className="fixed top-1 right-100 z-50 bg-gray-900 ">
             <TransportBar />
           </div>
         </div>
