@@ -95,6 +95,7 @@ export function TransportProvider({ children }) {
 
     let step = stepIndexRef.current;
 
+    if (state.mode !== "pattern") return;
 
     loopRef.current = new Tone.Loop((time) => {
 
