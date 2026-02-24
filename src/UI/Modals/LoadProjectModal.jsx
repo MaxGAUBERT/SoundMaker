@@ -14,7 +14,7 @@ export default function LoadProjectModal({ onClose, onLoad}) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" >
-      <div style={{backgroundColor: colorsComponent.BackgroundIO, color: colorsComponent.Text}} className="p-6 rounded-xl shadow-xl w-full max-w-2xl max-h-[80vh] relative overflow-y-auto border">
+      <div style={{backgroundColor: colorsComponent.BackgroundIO, color: colorsComponent.TextIO}} className="p-6 rounded-xl shadow-xl w-full max-w-2xl max-h-[80vh] relative overflow-y-auto border">
         <h2 className="text-2xl font-bold mb-4">Load Project</h2>
          <button 
             onClick={(e) => {

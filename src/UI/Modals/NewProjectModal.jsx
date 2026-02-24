@@ -13,7 +13,7 @@ export default function NewProjectModal({onClose, onCreate}) {
 
     return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" >
-      <div style={{backgroundColor: colorsComponent.BackgroundIO, color: colorsComponent.Text}} className=" p-6 rounded-xl shadow-xl w-full max-w-md relative border z-50">
+      <div style={{backgroundColor: colorsComponent.BackgroundIO, color: colorsComponent.TextIO}} className=" p-6 rounded-xl shadow-xl w-full max-w-md relative border z-50">
         <h2 className="text-2xl font-bold mb-4 text-black">Create New Project</h2>
         <form className="space-y-4 text-gray-600">
           <input

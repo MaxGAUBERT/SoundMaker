@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, memo } from "react";
+import { useState, useRef, memo } from "react";
 import { useChannelStore } from "../stores/useChannelStore";
 import { useTransport } from "../Contexts/features/TransportContext";
 import { useGlobalColorContext } from "../Contexts/UI/GlobalColorContext";
@@ -35,10 +35,12 @@ const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
   const [newName, setNewName] = useState("");
 
   function startRename() { setRenamingChannelId(ch.id); setNewName(ch.name); }
+
   function confirmRename() {
     if (newName.trim()) renameChannel(ch.id, newName.trim());
     setRenamingChannelId(null); setNewName("");
   }
+  
   function cancelRename() { setRenamingChannelId(null); setNewName(""); }
 
   function handleDragStart(e) {
@@ -165,8 +167,8 @@ export default function ChannelRack() {
           <select
             value={currentPatternID}
             onChange={e => setCurrentPatternID(Number(e.target.value))}
-            style={{ backgroundColor: colorsComponent.background, color: colorsComponent.TextIO }}
-            className="px-3 py-1 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            style={{ backgroundColor: colorsComponent.background, color: colorsComponent.Text }}
+            className="px-3 py-1 rounded text-sm focus:outline-none focus:ring-2 focus:bg-gray-800 focus:ring-blue-500"
           >
             {patterns.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>

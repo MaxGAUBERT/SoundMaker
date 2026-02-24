@@ -9,11 +9,12 @@ const GlobalColorContextProvider = ({ children }) => {
 
   // On expose directement les couleurs dérivées du theme
   const colorsComponent = {
-    Text: "white",    
-    TextIO: "gray.500",       
+    Text: "white",   
+    TextIO: "black",     
     Button: "gray.500",
     TransportButtons: "gray.700",
     Background: "gray.600",
+    BackgroundIO: "white",
     Border: "gray.900",
   };
 
