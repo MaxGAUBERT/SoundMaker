@@ -1,4 +1,4 @@
-import { useState, useRef, memo } from "react";
+import { useState, useRef, memo, useCallback } from "react";
 import { useChannelStore } from "../stores/useChannelStore";
 import { useTransport } from "../Contexts/features/TransportContext";
 import { useGlobalColorContext } from "../Contexts/UI/GlobalColorContext";
@@ -6,14 +6,17 @@ import { IoAddCircle, IoAddOutline } from "react-icons/io5";
 import { MdDelete } from "react-icons/md";
 import { BsBarChartSteps } from "react-icons/bs";
 
+
 const Cell = memo(({ value, index, currentStep, isPlaying, onToggle, onClear }) => {
+  const state = useTransport();
+  
   return (
     <div
       onClick={onToggle}
       onContextMenu={(e) => { e.preventDefault(); onClear(); }}
       className={`
         w-5 h-8 cursor-pointer transition-all
-        ${index === currentStep && isPlaying  ? 'ring-2 ring-green-500' : ''}
+        ${index === currentStep && isPlaying && state.mode === "pattern" ? 'ring-2 ring-green-500' : ''}
         ${index === currentStep && !isPlaying ? 'ring-2 ring-red-500'   : ''}
         ${index % 4 === 0 ? 'ml-1' : ''}
         ${value
@@ -31,6 +34,7 @@ const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
   toggleCell, clearCell, renameChannel, loadSample, deleteChannel,
   moveChannel, setDragOverIndex, setIsDragging
 }) => {
+  
   const [renamingChannelId, setRenamingChannelId] = useState(null);
   const [newName, setNewName] = useState("");
 
@@ -40,7 +44,8 @@ const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
     if (newName.trim()) renameChannel(ch.id, newName.trim());
     setRenamingChannelId(null); setNewName("");
   }
-  
+
+ 
   function cancelRename() { setRenamingChannelId(null); setNewName(""); }
 
   function handleDragStart(e) {

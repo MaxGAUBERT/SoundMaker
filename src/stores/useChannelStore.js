@@ -73,6 +73,19 @@ export const useChannelStore = create((set, get) => ({
         });
     },
 
+    resizeClip: (trackId, clipId, newLength) =>
+    set((s) => ({
+        playlistGrid: s.playlistGrid.map((t) => {
+        if (t.id !== trackId) return t;
+        return {
+            ...t,
+            clips: t.clips.map((c) =>
+            c.id === clipId ? { ...c, length: Math.max(1, newLength) } : c
+            ),
+        };
+        }),
+    })),
+
     clearCell: (patternId, channelId, cellIndex) => {
         const state = get();
         get()._mutate({
@@ -115,7 +128,7 @@ export const useChannelStore = create((set, get) => ({
         get()._mutate({
             patterns: state.patterns.map(p => ({
                 ...p,
-                ch: p.ch.map(ch => ch.id === channelId ? { ...ch, name: newName } : ch),
+                ch: p.ch.map(ch => ch.id === channelId ? { ...ch, name: newName.length > 8 ? ch.name : newName} : ch),
             })),
         });
     },

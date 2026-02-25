@@ -15,7 +15,7 @@ const MENU = [
   {
     id: "Window",
     label: "Window",
-    items: ["Drum Rack", "Pattern Selector", "FXChain", "Playlist"],
+    items: ["Drum Rack", "Note Editor", "FXChain", "Playlist"],
   },
 ];
 

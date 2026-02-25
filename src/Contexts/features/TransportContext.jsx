@@ -2,12 +2,14 @@ import { createContext, useContext, useRef, useReducer, useEffect } from 'react'
 import * as Tone from "tone";
 import { useChannels } from './ChannelProvider';
 import { TRANSPORT_ACTIONS, initialState, transportReducer } from '../../reducers/transportReducer';
-const TransportContext = createContext();
+import { usePlaylist } from './PlaylistProvider';
 
+const TransportContext = createContext();
 
 export function TransportProvider({ children }) {
   const [state, dispatch] = useReducer(transportReducer, initialState);
   const { patterns, currentPatternID, width } = useChannels();
+  const {playlistGrid} = usePlaylist();
 
   const loopRef = useRef(null);
   const metronomeEventRef = useRef(null);
@@ -21,7 +23,8 @@ export function TransportProvider({ children }) {
   useEffect(() => {
     metronomeEnabledRef.current = state.metronomeEnabled;
   }, [state.metronomeEnabled]);
-
+  
+  // charger des samples au premier render
   useEffect(() => {
 
   const loadSamples = async () => {
@@ -56,8 +59,8 @@ export function TransportProvider({ children }) {
 
 }, [currentPatternID, patterns]);
 
-  useEffect(() => {
-
+// jouer en mode pattern 
+useEffect(() => {
   const start = async () => {
 
     if (!state.isPlaying) {
@@ -95,8 +98,6 @@ export function TransportProvider({ children }) {
 
     let step = stepIndexRef.current;
 
-    if (state.mode !== "pattern") return;
-
     loopRef.current = new Tone.Loop((time) => {
 
       // METRONOME
@@ -108,8 +109,8 @@ export function TransportProvider({ children }) {
           time
         );
       }
-
-
+      
+      if (state.mode === "pattern"){
       // SAMPLES
       pattern.ch.forEach(ch => {
 
@@ -121,8 +122,7 @@ export function TransportProvider({ children }) {
           player.start(time);
         }
       });
-
-
+      
       // UI
       Tone.Draw.schedule(() => {
 
@@ -134,21 +134,26 @@ export function TransportProvider({ children }) {
         stepIndexRef.current = step;
 
       }, time);
+      }
 
+      else {
+        const patternsToPlay = playlistGrid;
+
+        patternsToPlay?.forEach(patterns => {
+          if (patterns){
+            
+          }
+        })
+      }
 
       step = (step + 1) % width;
-
     }, "16n");
 
 
     loopRef.current.start(0);
     Tone.Transport.start();
   };
-
-
   start();
-
-
   return () => {
 
     Tone.Transport.stop();
@@ -167,47 +172,47 @@ export function TransportProvider({ children }) {
   width
 ]);
 
-    useEffect(() => {
-    if (!state.metronomeEnabled || !state.isPlaying) {
-      // Arrêter le métronome
-      if (metronomeEventRef.current) {
-        Tone.Transport.clear(metronomeEventRef.current);
-        metronomeEventRef.current = null;
-      }
-      if (metronomeSynthRef.current) {
-        metronomeSynthRef.current.dispose();
-        metronomeSynthRef.current = null;
-      }
-      return;
+// gérer le métronome
+useEffect(() => {
+  if (!state.metronomeEnabled || !state.isPlaying) {
+
+    if (metronomeEventRef.current) {
+      Tone.Transport.clear(metronomeEventRef.current);
+      metronomeEventRef.current = null;
     }
-
-    // ✅ Créer le synth seulement s'il n'existe pas
-    if (!metronomeSynthRef.current) {
-      metronomeSynthRef.current = new Tone.Synth({
-        oscillator: { 
-          type: "sine"
-        },
-        envelope: { 
-          attack: 0.001, 
-          decay: 0.1, 
-          sustain: 0, 
-          release: 0.1 
-        },
-        volume: 0
-      }).toDestination();
+    if (metronomeSynthRef.current) {
+      metronomeSynthRef.current.dispose();
+      metronomeSynthRef.current = null;
     }
+    return;
+  }
 
-    return () => {
-      if (metronomeEventRef.current) {
-        Tone.Transport.clear(metronomeEventRef.current);
-        metronomeEventRef.current = null;
-      }
-      
-    };
-  }, [state.metronomeEnabled, state.isPlaying]);
+  if (!metronomeSynthRef.current) {
+    metronomeSynthRef.current = new Tone.Synth({
+      oscillator: { 
+        type: "sine"
+      },
+      envelope: { 
+        attack: 0.001, 
+        decay: 0.1, 
+        sustain: 0, 
+        release: 0.1 
+      },
+      volume: 0
+    }).toDestination();
+  }
 
-  // ✅ Cleanup final du synth au démontage du composant
-  useEffect(() => {
+  return () => {
+    if (metronomeEventRef.current) {
+      Tone.Transport.clear(metronomeEventRef.current);
+      metronomeEventRef.current = null;
+    }
+    
+  };
+}, [state.metronomeEnabled, state.isPlaying]);
+
+
+useEffect(() => {
     return () => {
       if (metronomeSynthRef.current) {
         metronomeSynthRef.current.dispose();
@@ -235,7 +240,8 @@ export function TransportProvider({ children }) {
   const setTimeSignature = (numerator, denominator) => 
     dispatch({ type: TRANSPORT_ACTIONS.SET_TIME_SIGNATURE, payload: { numerator, denominator } });
 
-  function getState() {
+// récupérer les états 
+function getState() {
   return {
     bpm: state.bpm,
     timeSignature: state.timeSignature,
@@ -244,6 +250,7 @@ export function TransportProvider({ children }) {
   };
 }
 
+// mettre à jour les états
 function setState(data) {
   if (!data) return;
 
