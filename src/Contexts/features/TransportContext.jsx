@@ -95,63 +95,33 @@ useEffect(() => {
       }).toDestination();
     }
 
-
+    stepIndexRef.current = 0;
     let step = stepIndexRef.current;
 
     loopRef.current = new Tone.Loop((time) => {
 
-      // METRONOME
-      if (state.metronomeEnabled && step % 4 === 0) {
+  const global = step;
 
-        metronomeSynthRef.current.triggerAttackRelease(
-          step === 0 ? "C6" : "C5",
-          "16n",
-          time
-        );
-      }
-      
-      if (state.mode === "pattern"){
-      // SAMPLES
-      pattern.ch.forEach(ch => {
+  /* ================= METRONOME ================= */
 
-        if (!ch.grid[step]) return;
+  if (state.metronomeEnabled && global % 4 === 0) {
+    metronomeSynthRef.current.triggerAttackRelease(
+      global === 0 ? "C6" : "C5",
+      "16n",
+      time
+    );
+  }
 
-        const player = playersRef.current.get(ch.id);
+  /* ================= PATTERN MODE ================= */
 
-        if (player?.loaded) {
-          player.start(time);
-        }
-      });
-      
-      // UI
-      Tone.Draw.schedule(() => {
+  if (state.mode === "pattern") {
 
-        dispatch({
-          type: TRANSPORT_ACTIONS.SET_CURRENT_STEP,
-          payload: step
-        });
+    const localStep = global % width;
 
-        stepIndexRef.current = step;
+    const pat = patterns.find(p => p.id === currentPatternID);
+    if (!pat) return;
 
-      }, time);
-      } else if (state.mode === "song") {
-
-  const patternWidth = width; // steps par pattern
-  const col = Math.floor(step / patternWidth);
-  const localStep = step % patternWidth;
-
-  const songLength = playlistGrid?.[0]?.grid?.length ?? 0;
-  if (col >= songLength) return;
-
-  playlistGrid.forEach((track) => {
-
-    const patternId = track.grid[col];
-    if (!patternId) return;
-
-    const pattern = patterns.find(p => p.id === patternId);
-    if (!pattern) return;
-
-    pattern.ch.forEach((ch) => {
+    pat.ch.forEach((ch) => {
 
       if (!ch.grid[localStep]) return;
 
@@ -159,20 +129,67 @@ useEffect(() => {
       if (player?.loaded) player.start(time);
 
     });
-  });
 
-  Tone.Draw.schedule(() => {
-    dispatch({
-      type: TRANSPORT_ACTIONS.SET_CURRENT_STEP,
-      payload: step
+    Tone.Draw.schedule(() => {
+      dispatch({
+        type: TRANSPORT_ACTIONS.SET_CURRENT_STEP,
+        payload: global
+      });
+      stepIndexRef.current = global;
+    }, time);
+  }
+
+  /* ================= SONG MODE ================= */
+
+  else if (state.mode === "song") {
+
+    const patternLength = width;
+    const songLength = playlistGrid?.[0]?.grid?.length ?? 1;
+    if (!songLength) return;
+
+    const songStep  = Math.floor(global % patternLength);
+    const localStep = global % patternLength;
+
+    if (songStep >= songLength) return;
+
+    playlistGrid.forEach((track) => {
+
+      const patternId = track.grid[songStep];
+      if (!patternId) return;
+
+      const pat = patterns.find(p => p.id === patternId);
+      if (!pat) return;
+
+      pat.ch.forEach((ch) => {
+
+        if (!ch.grid[localStep]) return;
+
+        const player = playersRef.current.get(ch.id);
+        if (player?.loaded) player.start(time);
+
+      });
     });
 
-    stepIndexRef.current = step;
-  }, time);
-}
+    Tone.Draw.schedule(() => {
+      dispatch({
+        type: TRANSPORT_ACTIONS.SET_CURRENT_STEP,
+        payload: global
+      });
+      stepIndexRef.current = global;
+    }, time);
+  }
 
-    step = (step + 1) % width;
-    }, "16n");
+  /* ================= STEP INC ================= */
+
+  const songCols = playlistGrid?.[0]?.grid?.length ?? 1;
+  const maxSteps =
+    state.mode === "song"
+      ? songCols
+      : width;
+
+  step = (global + 1) % maxSteps;
+
+}, "16n");
 
 
     loopRef.current.start(0);
@@ -194,7 +211,7 @@ useEffect(() => {
   state.isPlaying,
   state.metronomeEnabled,
   currentPatternID,
-  state.currentStep,
+  state.mode,
   width
 ]);
 
