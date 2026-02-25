@@ -35,13 +35,12 @@ export const useChannelStore = create((set, get) => ({
 
     _applySnapshot: (snapshot) => set(snapshot),
 
-   
     _mutate: (next) => {
         const { _commit } = get();
         if (_commit) {
             _commit('channel', next); 
         } else {
-            set(next);           
+           set(next);      
         }
     },
 
@@ -58,7 +57,9 @@ export const useChannelStore = create((set, get) => ({
 
     toggleCell: (patternId, channelId, cellIndex) => {
         const state = get();
+
         get()._mutate({
+            currentPatternID: patternId,
             patterns: state.patterns.map(p =>
                 p.id !== patternId ? p : {
                     ...p,
@@ -72,19 +73,6 @@ export const useChannelStore = create((set, get) => ({
             ),
         });
     },
-
-    resizeClip: (trackId, clipId, newLength) =>
-    set((s) => ({
-        playlistGrid: s.playlistGrid.map((t) => {
-        if (t.id !== trackId) return t;
-        return {
-            ...t,
-            clips: t.clips.map((c) =>
-            c.id === clipId ? { ...c, length: Math.max(1, newLength) } : c
-            ),
-        };
-        }),
-    })),
 
     clearCell: (patternId, channelId, cellIndex) => {
         const state = get();

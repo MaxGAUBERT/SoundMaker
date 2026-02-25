@@ -112,7 +112,7 @@ const PlaylistCell = memo(
         onContextMenu={onContextMenu}
         onDoubleClick={onDoubleClick}
         className={`
-          w-8 h-14 border-r border-b cursor-pointer transition-all
+          w-32 h-14 border-r border-b cursor-pointer transition-all
           ${cIdx % 4 === 0 ? "border-r-gray-500" : "border-r-gray-700"}
           border-b-gray-700
           ${

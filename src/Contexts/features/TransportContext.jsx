@@ -134,25 +134,51 @@ useEffect(() => {
         stepIndexRef.current = step;
 
       }, time);
-      }
+      } else if (state.mode === "song") {
 
-      else {
-        const patternsToPlay = playlistGrid;
+  const patternWidth = width; // steps par pattern
+  const col = Math.floor(step / patternWidth);
+  const localStep = step % patternWidth;
 
-        patternsToPlay?.forEach(patterns => {
-          if (patterns){
-            
-          }
-        })
-      }
+  const songLength = playlistGrid?.[0]?.grid?.length ?? 0;
+  if (col >= songLength) return;
 
-      step = (step + 1) % width;
+  playlistGrid.forEach((track) => {
+
+    const patternId = track.grid[col];
+    if (!patternId) return;
+
+    const pattern = patterns.find(p => p.id === patternId);
+    if (!pattern) return;
+
+    pattern.ch.forEach((ch) => {
+
+      if (!ch.grid[localStep]) return;
+
+      const player = playersRef.current.get(ch.id);
+      if (player?.loaded) player.start(time);
+
+    });
+  });
+
+  Tone.Draw.schedule(() => {
+    dispatch({
+      type: TRANSPORT_ACTIONS.SET_CURRENT_STEP,
+      payload: step
+    });
+
+    stepIndexRef.current = step;
+  }, time);
+}
+
+    step = (step + 1) % width;
     }, "16n");
 
 
     loopRef.current.start(0);
     Tone.Transport.start();
   };
+  
   start();
   return () => {
 
