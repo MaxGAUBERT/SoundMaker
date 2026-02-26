@@ -5,6 +5,7 @@ import { useGlobalColorContext } from "../Contexts/UI/GlobalColorContext";
 import { IoAddCircle, IoAddOutline } from "react-icons/io5";
 import { MdDelete } from "react-icons/md";
 import { BsBarChartSteps } from "react-icons/bs";
+import { FaFill } from "react-icons/fa";
 
 
 const Cell = memo(({ value, index, currentStep, isPlaying, onToggle, onFill, onClear }) => {
@@ -40,7 +41,7 @@ const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
   
   const [renamingChannelId, setRenamingChannelId] = useState(null);
   const [newName, setNewName] = useState("");
-  const [fillValue, setFillValue] = useState(2);
+  const [fillValue, setFillValue] = useState(4);
 
   function startRename() { setRenamingChannelId(ch.id); setNewName(ch.name); }
 
@@ -112,14 +113,22 @@ const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
         className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-1 file:text-xs file:bg-gray-700 file:text-white hover:file:bg-gray-600"
       />
 
-      <select value={fillValue} onChange={(e) => setFillValue(Number(e.target.value))}>
-        {[4,8,12,16,32,64].map(n => <option key={n} value={n}> {n} </option>)}
+      <select
+        value={fillValue}
+        onChange={(e) => {
+          const v = e.target.value;
+          setFillValue(isNaN(v) ? v : Number(v));
+        }}
+      >
+        {[4,8,12,16,32,64,"1/2","1/4","1/8"].map(n =>
+          <option key={n} value={n}>{n}</option>
+        )}
       </select>
 
       <button 
         onClick={() => fillSteps(currentPatternID, ch.id, 0, fillValue, true)}
       >
-        Fill
+        <FaFill title="Fill steps"/>
       </button>
 
       <button
