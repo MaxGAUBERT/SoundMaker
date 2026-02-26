@@ -229,7 +229,7 @@ const Playlist = memo(() => {
           }}
           className="w-20 border-r flex items-center justify-center text-xs"
         />
-        {Array.from({ length: pWidth }).map((_, i) => (
+        {Array.from({ length: pWidth * CELL_W / 2 }).map((_, i) => (
           <div
             key={i}
             className={`w-8 h-8 text-xs text-gray-400 flex items-center justify-center border-r ${
