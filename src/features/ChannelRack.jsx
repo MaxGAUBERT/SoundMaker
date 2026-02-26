@@ -7,12 +7,15 @@ import { MdDelete } from "react-icons/md";
 import { BsBarChartSteps } from "react-icons/bs";
 
 
-const Cell = memo(({ value, index, currentStep, isPlaying, onToggle, onClear }) => {
+const Cell = memo(({ value, index, currentStep, isPlaying, onToggle, onFill, onClear }) => {
   const state = useTransport();
   
   return (
     <div
-      onClick={onToggle}
+      onClick={(e) => {
+        if (e.shiftKey) onFill();
+        else onToggle();
+      }}
       onContextMenu={(e) => { e.preventDefault(); onClear(); }}
       className={`
         w-5 h-8 cursor-pointer transition-all
@@ -31,12 +34,13 @@ const Cell = memo(({ value, index, currentStep, isPlaying, onToggle, onClear }) 
 
 const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
   colorsComponent, canDelete, isDragging, dragOverIndex, dragIndexRef,
-  toggleCell, clearCell, renameChannel, loadSample, deleteChannel,
+  toggleCell, fillSteps, clearCell, renameChannel, loadSample, deleteChannel, 
   moveChannel, setDragOverIndex, setIsDragging
 }) => {
   
   const [renamingChannelId, setRenamingChannelId] = useState(null);
   const [newName, setNewName] = useState("");
+  const [fillValue, setFillValue] = useState(2);
 
   function startRename() { setRenamingChannelId(ch.id); setNewName(ch.name); }
 
@@ -108,6 +112,16 @@ const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
         className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-1 file:text-xs file:bg-gray-700 file:text-white hover:file:bg-gray-600"
       />
 
+      <select value={fillValue} onChange={(e) => setFillValue(Number(e.target.value))}>
+        {[4,8,12,16,32,64].map(n => <option key={n} value={n}> {n} </option>)}
+      </select>
+
+      <button 
+        onClick={() => fillSteps(currentPatternID, ch.id, 0, fillValue, true)}
+      >
+        Fill
+      </button>
+
       <button
         disabled={!canDelete}
         title={canDelete ? "Delete channel" : "Cannot delete (minimum 2 channels required)"}
@@ -126,6 +140,7 @@ const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
             currentStep={currentStep}
             isPlaying={isPlaying}
             onToggle={() => toggleCell(currentPatternID, ch.id, i)}
+            fillSteps={() => fillSteps(currentPatternID, ch.id, i)}
             onClear={() => clearCell(currentPatternID, ch.id, i)}
           />
         ))}
@@ -152,6 +167,7 @@ export default function ChannelRack() {
   const resetSamples         = useChannelStore(s => s.resetSamples);
   const moveChannel          = useChannelStore(s => s.moveChannel);
   const deleteChannel        = useChannelStore(s => s.deleteChannel);
+  const fillSteps           = useChannelStore(s => s.fillSteps);
 
   const { colorsComponent } = useGlobalColorContext();
   const { isPlaying, currentStep } = useTransport();
@@ -211,6 +227,7 @@ export default function ChannelRack() {
                     dragOverIndex={dragOverIndex}
                     dragIndexRef={dragIndexRef}
                     toggleCell={toggleCell}
+                    fillSteps={fillSteps}
                     clearCell={clearCell}
                     renameChannel={renameChannel}
                     loadSample={loadSample}

@@ -74,6 +74,34 @@ export const useChannelStore = create((set, get) => ({
         });
     },
 
+    fillSteps: (patternId, channelId, startIndex, n, value = true) => {
+    const state = get();
+
+    get()._mutate({
+    patterns: state.patterns.map(p =>
+      p.id !== patternId
+        ? p
+        : {
+            ...p,
+            ch: p.ch.map(ch =>
+              ch.id !== channelId
+                ? ch
+                : {
+                    ...ch,
+                    grid: ch.grid.map((cell, i) => {
+                      const end = startIndex + n;
+                      if (i >= startIndex && i < end) {
+                        return value;
+                      }
+                      return cell;
+                    }),
+                  }
+            ),
+          }
+    ),
+  });
+    },
+
     clearCell: (patternId, channelId, cellIndex) => {
         const state = get();
         get()._mutate({
