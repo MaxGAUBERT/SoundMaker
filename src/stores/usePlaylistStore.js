@@ -1,7 +1,7 @@
 // stores/usePlaylistStore.js
 import { create } from 'zustand';
 
-const DEFAULT_WIDTH  = 8;
+const DEFAULT_WIDTH  = 16;
 const DEFAULT_HEIGHT = 8;
 
 function buildGrid(width, height, prev = []) {

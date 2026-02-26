@@ -9,7 +9,7 @@ const TransportContext = createContext();
 export function TransportProvider({ children }) {
   const [state, dispatch] = useReducer(transportReducer, initialState);
   const { patterns, currentPatternID, width } = useChannels();
-  const {playlistGrid} = usePlaylist();
+  const {playlistGrid, selectedPatternId} = usePlaylist();
 
   const loopRef = useRef(null);
   const metronomeEventRef = useRef(null);
@@ -144,20 +144,18 @@ useEffect(() => {
   else if (state.mode === "song") {
 
     const patternLength = width;
-    const songLength = playlistGrid?.[0]?.grid?.length ?? 1;
-    if (!songLength) return;
+    const totalCols = playlistGrid?.[0]?.grid?.length ?? 0;
+    if (!totalCols) return;
 
-    const songStep  = Math.floor(global % patternLength);
+    const colIndex = Math.floor(global / patternLength) % totalCols;
     const localStep = global % patternLength;
 
-    if (songStep >= songLength) return;
-
     playlistGrid.forEach((track) => {
-
-      const patternId = track.grid[songStep];
+      const patternId = track.grid[colIndex];
       if (!patternId) return;
 
       const pat = patterns.find(p => p.id === patternId);
+
       if (!pat) return;
 
       pat.ch.forEach((ch) => {
@@ -180,14 +178,15 @@ useEffect(() => {
   }
 
   /* ================= STEP INC ================= */
+  const pLength = width;
+  const totalColumns = playlistGrid[0]?.grid?.length ?? 1;
+  const totalSteps = pLength * totalColumns;
 
-  const songCols = playlistGrid?.[0]?.grid?.length ?? 1;
-  const maxSteps =
-    state.mode === "song"
-      ? songCols
-      : width;
+  state.mode === "song"
+      ? totalSteps
+      : pLength
 
-  step = (global + 1) % maxSteps;
+  step = (global + 1) % totalSteps;
 
 }, "16n");
 
