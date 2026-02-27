@@ -75,9 +75,9 @@ export const useChannelStore = create((set, get) => ({
     },
 
     fillSteps: (patternId, channelId, startIndex, n, value = true) => {
-  const state = get();
+    const state = get();
 
-  get()._mutate({
+    get()._mutate({
     patterns: state.patterns.map(p =>
       p.id !== patternId
         ? p
@@ -104,22 +104,20 @@ export const useChannelStore = create((set, get) => ({
                         const step = parseInt(parts[1], 10);
 
                         if (!isNaN(step)) {
-                          return (i >= startIndex && (i - startIndex) % step === 0)
+                          return (i >= startIndex && (i - startIndex) % step === 0 )
                             ? value
-                            : cell;
+                            : null;
                         }
 
                         return cell;
                       }
-
-                      return cell;
                     }),
                   }
             ),
           }
     ),
   });
-},
+    },
 
     clearCell: (patternId, channelId, cellIndex) => {
         const state = get();

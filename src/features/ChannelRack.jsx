@@ -121,12 +121,13 @@ const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
         }}
       >
         {[4,8,12,16,32,64,"1/2","1/4","1/8"].map(n =>
-          <option key={n} value={n}>{n}</option>
+          <option className="hover:bg-gray-600 bg-gray-800"  key={n} value={n}>{n}</option>
         )}
       </select>
 
       <button 
-        onClick={() => fillSteps(currentPatternID, ch.id, 0, fillValue, true)}
+        onClick={() =>
+            fillSteps(currentPatternID, ch.id, 0, fillValue, true)}  
       >
         <FaFill title="Fill steps"/>
       </button>
