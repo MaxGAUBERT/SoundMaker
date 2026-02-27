@@ -20,6 +20,7 @@ export const CHORD_TYPES = {
   dom7: [0, 4, 7, 10],
 };
 
+
 const ModeButton = React.memo(({ mode, currentMode, onClick, icon: Icon, title }) => {
   const isActive = mode === currentMode;
   const buttonClass = `px-4 py-2 rounded transition-colors ${
@@ -42,7 +43,6 @@ const ModeButton = React.memo(({ mode, currentMode, onClick, icon: Icon, title }
 });
 
 
-// Composant ChordSelector mémorisé
 const ChordSelector = React.memo(({ selectedChordType, onChordTypeChange, disabled }) => {
   const chordOptions = useMemo(() => 
     Object.keys(CHORD_TYPES).map((chordName) => (
@@ -87,6 +87,7 @@ const ColsSlider = React.memo(({ cols, onColsChange }) => {
 });
 
 export const TopBar = ({
+  selectedInstrument,
   mode,
   toggleMode,
   clearAll,
@@ -95,7 +96,7 @@ export const TopBar = ({
   width,
   setWidth
 }) => {
-  // Handlers optimisés avec useCallback
+
   const handleDrawMode = useCallback(() => toggleMode('draw'), [toggleMode]);
   const handlePaintMode = useCallback(() => toggleMode('paint'), [toggleMode]);
   const handleResizeMode = useCallback(() => toggleMode('resize'), [toggleMode]);
@@ -190,6 +191,7 @@ export const TopBar = ({
   return (
     <div className="flex gap-2 mb-2 items-center ml-10">
       {/* Instrument Label */}
+      <label>{selectedInstrument.id}</label>
 
       {/* Close Button */}
       <button 
@@ -238,7 +240,6 @@ export const TopBar = ({
   );
 };
 
-// Définir displayName pour le debugging
 TopBar.displayName = 'TopBar';
 ModeButton.displayName = 'ModeButton';
 ChordSelector.displayName = 'ChordSelector';

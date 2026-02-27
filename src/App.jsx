@@ -54,7 +54,9 @@ export default function App() {
             style={{ width: `${leftWidth}%` }}
           >
             <ChannelRack />
-            <PianoRoll />
+            <div className='overflow-auto'>
+                <PianoRoll />
+            </div>
           </div>
 
           {/* Diviseur */}

@@ -24,19 +24,24 @@ export const usePianoRollStore = create(
   immer((set) => ({
     ...initialState,
 
-    setMode:           (mode)      => set({ mode }),
-    setSelectedNoteId: (id)        => set({ selectedNoteId: id }),
-    setIsMouseDown:    (value)     => set({ isMouseDown: value }),
-    setWindowRange:    (range)     => set({ windowRange: range }),
+    setMode:              (mode)  => set({ mode }),
+    setSelectedNoteId:    (id)    => set({ selectedNoteId: id }),
+    setIsMouseDown:       (value) => set({ isMouseDown: value }),
+    setWindowRange:       (range) => set(state => {
+      // Accepte aussi bien une valeur directe qu'un updater (prev => next)
+      state.windowRange = typeof range === "function"
+        ? range(state.windowRange)
+        : range;
+    }),
     setSelectedChordType: (type)  => set({ selectedChordType: type }),
 
-    // ── Resize ───────────────────────────────────────────────────────────────
+    // ── Resize ──────────────────────────────────────────────────────────────
     startResize: (note, mode, mouseX) =>
       set({
-        isResizing:    true,
-        resizeMode:    mode,
-        initialMouseX: mouseX,
-        initialNote:   { ...note },
+        isResizing:     true,
+        resizeMode:     mode,
+        initialMouseX:  mouseX,
+        initialNote:    { ...note },
         selectedNoteId: note.id,
       }),
 

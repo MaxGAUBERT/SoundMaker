@@ -19,6 +19,7 @@ export function buildInitialChannelState() {
     return {
         width,
         currentPatternID: 1,
+        currentChannelID: 0,
         initialChannels: 4,
         players: new Map(),
         patterns: [

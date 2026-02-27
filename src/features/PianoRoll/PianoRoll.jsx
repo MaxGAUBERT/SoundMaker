@@ -11,7 +11,7 @@ import { rowToNoteName }     from "../../features/PianoRoll/utils/noteUtils";
 import { useChannelStore }  from "../../stores/useChannelStore";
 import { usePianoRollStore } from "../../stores/usePianoRollStore";
 import { usePianoRollNotes } from "../../hooks/piano/usePianoRollNotes";
-import { usePianoRollAudio } from "../../hooks/piano/usePianoRollAudio";
+
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 export const ROWS        = 48;
@@ -83,7 +83,6 @@ const MeasureLabels = React.memo(({ cols, cellWidth }) => {
 
 const PianoRoll = () => {
   // ── Stores ────────────────────────────────────────────────────────────────
-  //const selectedPatternID = useChannelStore((s) => s.selectedPatternID);
   const channel = useChannelStore(s => s.getCurrentChannel());
   const width = useChannelStore((s) => s.width);
   const setWidth = useChannelStore((s) => s.setWidth);
@@ -121,7 +120,7 @@ const PianoRoll = () => {
  // useEffect(() => { registerwidthetter(setCurrentStep); }, [registerwidthetter]);
 
   // ── Notes (lecture) ───────────────────────────────────────────────────────
-  //const currentNotes = useMemo(() => getNotes(), [getNotes]);
+  const currentNotes = useMemo(() => getNotes(), [getNotes]);
 
   // ── Zoom ──────────────────────────────────────────────────────────────────
   const naturalWidthPx    = width * CELL_WIDTH;
@@ -177,7 +176,7 @@ const PianoRoll = () => {
       urls: { C4: channel?.sampleUrl }
     }).toDestination();
 
-  }, []);
+  }, [channel?.sampleUrl]);
 
   const handlePlaySound = useCallback(async (_, row) => {
     await Tone.start();
@@ -189,7 +188,7 @@ const PianoRoll = () => {
     } catch (err) {
       console.error(`[PianoRoll] Audio error:`, err);
     }
-  }, [samplerRef.current]);
+  }, []);
   
 
   const handleColsChange = useCallback((newCols) => {
@@ -362,19 +361,19 @@ const PianoRoll = () => {
         setNotes((prev) => [...prev, ...chordNotes]);
         setSelectedNoteId(chordNotes[0].id);
       }
-      //handlePlaySound(null, row);
+      handlePlaySound(null, row);
     }
   }, [isResizingStore, mode, width, xToContent, setNotes,
       setSelectedNoteId, getNotes, generateChordNotes, startResizeGrid]);
 
   const toggleMode = useCallback((newMode) => setMode(newMode), [setMode]);
   const clearAll   = useCallback(() => { clearNotes(); setSelectedNoteId(null); }, [clearNotes, setSelectedNoteId]);
-
+  
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="bg-gray-900 text-white rounded-xl min-h-0">
       <TopBar
-        //selectedInstrument={selectedInstrument}
+        selectedInstrument={channel}
         mode={mode}
         toggleMode={toggleMode}
         clearAll={clearAll}
