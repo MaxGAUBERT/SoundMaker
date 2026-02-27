@@ -20,7 +20,7 @@ export function usePianoRollNotes() {
     const channel = pattern?.ch.find(c => c.id === currentChannelID);
     return channel?.pianoData ?? [];
   }, [patterns, currentPatternID, currentChannelID]);
-
+  /*
   const setNotes = useCallback((notesOrUpdater) => {
     const currentNotes = getNotes();
     const next = typeof notesOrUpdater === "function"
@@ -41,6 +41,42 @@ export function usePianoRollNotes() {
       ),
     });
   }, [patterns, currentPatternID, currentChannelID, getNotes, _mutate]);
+  */
+
+  const setNotes = useCallback((notesOrUpdater) => {
+
+  const state = useChannelStore.getState();
+
+  const pattern = state.patterns.find(p => p.id === state.currentPatternID);
+  if (!pattern) return;
+
+  const channel = pattern.ch.find(c => c.id === state.currentChannelID);
+  if (!channel) return;
+
+  const currentNotes = channel.pianoData ?? [];
+
+  const next =
+    typeof notesOrUpdater === "function"
+      ? notesOrUpdater([...currentNotes])   // ← clone sécurisée
+      : notesOrUpdater;
+
+  state._mutate({
+    patterns: state.patterns.map(p =>
+      p.id !== state.currentPatternID ? p : {
+        ...p,
+        ch: p.ch.map(ch =>
+          ch.id !== state.currentChannelID ? ch : {
+            ...ch,
+            pianoData: next
+          }
+        )
+      }
+    )
+  });
+
+  console.log(next);
+
+  }, [patterns]);
 
   // ── Actions dérivées ──────────────────────────────────────────────────────
 

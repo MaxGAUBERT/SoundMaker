@@ -97,7 +97,7 @@ const PianoRoll = () => {
   } = usePianoRollStore();
 
   // ── Hooks métier ─────────────────────────────────────────────────────────
-  const { getNotes, setNotes, addNote, removeNote, updateNote, clearNotes, filterNotesInRange } =
+  const { getNotes, setNotes, addNote, clearNotes, filterNotesInRange } =
     usePianoRollNotes();
 
   const samplerRef = useRef(null);
