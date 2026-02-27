@@ -1,6 +1,6 @@
 // stores/useChannelStore.js
 import { create } from 'zustand';
-import { DRUM_SAMPLES, DEFAULT_CHANNELS } from '../hooks/useSamples';
+import { DRUM_SAMPLES, DEFAULT_CHANNELS } from '../hooks/Samples/useSamples';
 
 const DEFAULT_WIDTH = 16;
 
@@ -11,17 +11,19 @@ function createGrid(width = DEFAULT_WIDTH) {
 export function buildInitialChannelState() {
     const width = DEFAULT_WIDTH;
     const initialChannels = [
-        { id: 0, name: 'Kick',  grid: createGrid(width), sampleUrl: DRUM_SAMPLES.kick  },
-        { id: 1, name: 'Snare', grid: createGrid(width), sampleUrl: DRUM_SAMPLES.snare },
-        { id: 2, name: 'Hihat', grid: createGrid(width), sampleUrl: DRUM_SAMPLES.hihat },
-        { id: 3, name: 'Clap',  grid: createGrid(width), sampleUrl: DRUM_SAMPLES.clap  },
+        { id: 0, name: 'Kick',  grid: createGrid(width), sampleUrl: DRUM_SAMPLES.kick, pianoData: []},
+        { id: 1, name: 'Snare', grid: createGrid(width), sampleUrl: DRUM_SAMPLES.snare, pianoData: []},
+        { id: 2, name: 'Hihat', grid: createGrid(width), sampleUrl: DRUM_SAMPLES.hihat, pianoData: []},
+        { id: 3, name: 'Clap',  grid: createGrid(width), sampleUrl: DRUM_SAMPLES.clap, pianoData: []},
     ];
     return {
         width,
         currentPatternID: 1,
+        initialChannels: 4,
+        players: new Map(),
         patterns: [
-            { id: 1, name: 'P1', ch: initialChannels.map(ch => ({ ...ch, grid: [...ch.grid] })), steps: width },
-            { id: 2, name: 'P2', ch: initialChannels.map(ch => ({ ...ch, grid: [...ch.grid] })), steps: width },
+            { id: 1, name: 'P1', ch: initialChannels.map(ch => ({ ...ch, grid: [...ch.grid] })), steps: width, },
+            { id: 2, name: 'P2', ch: initialChannels.map(ch => ({ ...ch, grid: [...ch.grid]})), steps: width, },
         ],
     };
 }
@@ -48,6 +50,14 @@ export const useChannelStore = create((set, get) => ({
     getCurrentPattern: () => {
         const { patterns, currentPatternID } = get();
         return patterns.find(p => p.id === currentPatternID);
+    },
+
+    getPlayer: (id) => get().players.get(id),
+
+    getCurrentChannel: () => {
+        const { patterns, currentPatternID, currentChannelID } = get();
+        const pattern = patterns.find(p => p.id === currentPatternID)
+        return pattern?.ch.find(c => c.id === currentChannelID)
     },
 
     // ── Actions non-undoables (navigation) ───────────────────────────────
@@ -142,7 +152,7 @@ export const useChannelStore = create((set, get) => ({
         get()._mutate({
             patterns: state.patterns.map(p => ({
                 ...p,
-                ch: [...p.ch, { id: newId, name: `Channel ${newId}`, grid: createGrid(state.width), sampleUrl: null }],
+                ch: [...p.ch, { id: newId, name: `Channel ${newId}`, grid: createGrid(state.width), sampleUrl: null, pianoData: [] }],
             })),
         });
     },
@@ -152,7 +162,7 @@ export const useChannelStore = create((set, get) => ({
         const newId = state.patterns.length + 1;
         const clone = state.patterns[0].ch.map(ch => ({ ...ch, grid: [...ch.grid] }));
         get()._mutate({
-            patterns: [...state.patterns, { id: newId, name: `P${newId}`, ch: clone, steps: state.width }],
+            patterns: [...state.patterns, { id: newId, name: `P${newId}`, ch: clone, steps: state.width, pianoData: [] }],
         });
     },
 
@@ -232,7 +242,7 @@ export const useChannelStore = create((set, get) => ({
                 ...p,
                 ch: p.ch.map(ch => {
                     const def = DEFAULT_CHANNELS.find(d => d.id === ch.id);
-                    return { ...ch, sampleUrl: def?.sampleUrl ?? null };
+                    return { ...ch, sampleUrl: def?.sampleUrl ?? null, pianoData: [] };
                 }),
             })),
         });
@@ -245,7 +255,7 @@ export const useChannelStore = create((set, get) => ({
             currentPatternID, width,
             patterns: patterns.map(p => ({
                 id: p.id, name: p.name,
-                channels: p.ch.map(ch => ({ id: ch.id, name: ch.name, grid: [...ch.grid], sampleUrl: ch.sampleUrl })),
+                channels: p.ch.map(ch => ({ id: ch.id, name: ch.name, grid: [...ch.grid], sampleUrl: ch.sampleUrl, pianoData: [] })),
             })),
         };
     },
@@ -258,7 +268,7 @@ export const useChannelStore = create((set, get) => ({
             patterns: data.patterns.map(p => ({
                 id: p.id, name: p.name,
                 steps: p.channels?.[0]?.grid?.length ?? DEFAULT_WIDTH,
-                ch: p.channels.map(ch => ({ id: ch.id, name: ch.name, grid: [...ch.grid], sampleUrl: ch.sampleUrl ?? null })),
+                ch: p.channels.map(ch => ({ id: ch.id, name: ch.name, grid: [...ch.grid], sampleUrl: ch.sampleUrl ?? null, pianoData: [] })),
             })),
         });
     },

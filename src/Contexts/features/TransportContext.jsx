@@ -15,7 +15,7 @@ export function TransportProvider({ children }) {
   const metronomeEventRef = useRef(null);
   const metronomeSynthRef = useRef(null);
 
-  const playersRef = useRef(new Map());
+  const samplersRef = useRef(new Map());
   const stepIndexRef = useRef(0);
 
   // Ref pour lire metronomeEnabled depuis la boucle audio sans la redémarrer
@@ -29,8 +29,8 @@ export function TransportProvider({ children }) {
 
   const loadSamples = async () => {
 
-    playersRef.current.forEach(p => p.dispose());
-    playersRef.current.clear();
+    samplersRef.current.forEach(p => p.dispose());
+    samplersRef.current.clear();
 
     const pattern = patterns.find(p => p.id === currentPatternID);
     if (!pattern) return;
@@ -39,10 +39,14 @@ export function TransportProvider({ children }) {
       .filter(ch => ch.sampleUrl)
       .map(ch => {
 
-        const player = new Tone.Player(ch.sampleUrl).toDestination();
-        playersRef.current.set(ch.id, player);
+        const sampler = new Tone.Sampler({
+          urls: {
+            C5: ch.sampleUrl 
+          }
+        }).toDestination();
+        samplersRef.current.set(ch.id, sampler);
 
-        return player.load();
+        return sampler;
       });
 
     await Promise.all(loaders);
@@ -53,8 +57,8 @@ export function TransportProvider({ children }) {
   loadSamples();
 
   return () => {
-    playersRef.current.forEach(p => p.dispose());
-    playersRef.current.clear();
+    samplersRef.current.forEach(p => p.dispose());
+    samplersRef.current.clear();
   };
 
 }, [currentPatternID, patterns]);
@@ -125,9 +129,8 @@ useEffect(() => {
 
       if (!ch.grid[localStep]) return;
 
-      const player = playersRef.current.get(ch.id);
-      if (player?.loaded) player.start(time);
-
+      const sampler = samplersRef.current.get(ch.id);
+      if (sampler?.loaded) sampler.triggerAttackRelease("C5", "4n");
     });
 
     Tone.Draw.schedule(() => {
@@ -162,8 +165,8 @@ useEffect(() => {
 
         if (!ch.grid[localStep]) return;
 
-        const player = playersRef.current.get(ch.id);
-        if (player?.loaded) player.start(time);
+        const sampler = samplersRef.current.get(ch.id);
+        if (sampler?.loaded) sampler.start(time);
 
       });
     });

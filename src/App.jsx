@@ -5,7 +5,7 @@ import Playlist from './features/Playlist';
 import StripMenu from './UI/StripMenu';
 import TransportBar from './UI/TransportBar';
 import AppProviders from './Contexts/features/AppProviders';
-
+import PianoRoll from './features/PianoRoll/PianoRoll';
 
 export default function App() {
   const [leftWidth, setLeftWidth] = useState(50);
@@ -54,6 +54,7 @@ export default function App() {
             style={{ width: `${leftWidth}%` }}
           >
             <ChannelRack />
+            <PianoRoll />
           </div>
 
           {/* Diviseur */}

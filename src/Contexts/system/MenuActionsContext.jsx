@@ -1,7 +1,7 @@
 import { createContext, useContext, useState } from "react";
 
 import { useChannels } from "../../Contexts/features/ChannelProvider";
-import useProjectManager from "../../hooks/useProjectManager";
+import useProjectManager from "../../hooks/system/useProjectManager";
 
 import NewProjectModal from "../../UI/Modals/NewProjectModal";
 import LoadProjectModal from "../../UI/Modals/LoadProjectModal";

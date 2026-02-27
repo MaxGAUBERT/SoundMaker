@@ -3,7 +3,7 @@
 // ChannelProvider et PlaylistProvider dans un ordre chronologique.
 
 import { createContext, useContext } from 'react';
-import { useUndoManager } from '../../hooks/useUndoManager';
+import { useUndoManager } from '../../hooks/system/useUndoManager';
 import { buildInitialChannelState } from '../features/ChannelProvider';
 import { buildInitialPlaylistState } from '../features/PlaylistProvider';
 
