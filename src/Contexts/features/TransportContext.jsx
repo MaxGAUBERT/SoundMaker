@@ -186,7 +186,9 @@ useEffect(() => {
       ? totalSteps
       : pLength
 
-  step = (global + 1) % totalSteps;
+  state.mode === "song"
+      ? step = (global + 1) % totalSteps
+      : step = (global + 1) % pLength
 
 }, "16n");
 
