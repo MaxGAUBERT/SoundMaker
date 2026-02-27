@@ -21,6 +21,7 @@ export const noteNames   = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"
 
 const MIN_WINDOW_PERCENT = 2;
 
+
 // ── Sous-composants (inchangés, déjà bien optimisés) ─────────────────────────
 
 const GridLines = React.memo(({ rows, cols, cellWidth, cellHeight }) => {
@@ -83,9 +84,10 @@ const MeasureLabels = React.memo(({ cols, cellWidth }) => {
 
 const PianoRoll = () => {
   // ── Stores ────────────────────────────────────────────────────────────────
-  const channel = useChannelStore(s => s.getCurrentChannel());
   const width = useChannelStore((s) => s.width);
   const setWidth = useChannelStore((s) => s.setWidth);
+  const channel = useChannelStore(s => s.getCurrentChannelName());
+  const channelUrl = useChannelStore(s => s.getCurrentChannelUrl());
 
   const {
     mode, selectedNoteId, isMouseDown, isResizing: isResizingStore,
@@ -168,28 +170,45 @@ const PianoRoll = () => {
   // ── Handlers ──────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (!channel) console.log("no channel found");
+  let mounted = true;
+
+  const loadSampler = async () => {
+    if (!channelUrl) return;
 
     samplerRef.current?.dispose();
 
-    samplerRef.current = new Tone.Sampler({
-      urls: { C4: channel?.sampleUrl }
+    const sampler = new Tone.Sampler({
+      urls: { C5: channelUrl }
     }).toDestination();
 
-  }, [channel?.sampleUrl]);
+    samplerRef.current = sampler;
+
+    await sampler.loaded;
+
+    if (!mounted) {
+      sampler.dispose();
+    }
+  };
+
+  loadSampler();
+
+  return () => {
+    mounted = false;
+    samplerRef.current?.dispose();
+    samplerRef.current = null;
+  };
+
+}, [channelUrl]);
 
   const handlePlaySound = useCallback(async (_, row) => {
-    await Tone.start();
-    const sampler = samplerRef.current;
+  await Tone.start();
 
-    if( !sampler) console.error("error of sampler !");
-    try {
-      if (sampler?.loaded) sampler.triggerAttackRelease(rowToNoteName(row), "8n");
-    } catch (err) {
-      console.error(`[PianoRoll] Audio error:`, err);
-    }
-  }, []);
-  
+  const sampler = samplerRef.current;
+  if (!sampler) return;
+
+  sampler.triggerAttackRelease(rowToNoteName(row), "8n");
+
+}, [channelUrl]);
 
   const handleColsChange = useCallback((newCols) => {
     requestAnimationFrame(() => {

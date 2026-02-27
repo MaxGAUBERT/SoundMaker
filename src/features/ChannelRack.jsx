@@ -7,7 +7,6 @@ import { MdDelete } from "react-icons/md";
 import { BsBarChartSteps } from "react-icons/bs";
 import { FaFill } from "react-icons/fa";
 
-
 const Cell = memo(({ value, index, currentStep, isPlaying, onToggle, onFill, onClear }) => {
   const state = useTransport();
   
@@ -42,6 +41,8 @@ const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
   const [renamingChannelId, setRenamingChannelId] = useState(null);
   const [newName, setNewName] = useState("");
   const [fillValue, setFillValue] = useState(4);
+  const setCurrentChannelID = useChannelStore(s => s.setCurrentChannelID);
+
 
   function startRename() { setRenamingChannelId(ch.id); setNewName(ch.name); }
 
@@ -98,6 +99,10 @@ const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
       ) : (
         <span
           onDoubleClick={startRename}
+          onClick={() => 
+            setCurrentChannelID(ch.id)
+          }
+
           style={{ color: colorsComponent.Text, backgroundColor: colorsComponent.background }}
           className="w-24 text-sm sticky left-0 z-10 flex items-center px-2 cursor-pointer hover:bg-gray-700 rounded transition-colors"
           title="Double-click to rename"

@@ -21,7 +21,6 @@ export function buildInitialChannelState() {
         currentPatternID: 1,
         currentChannelID: 0,
         initialChannels: 4,
-        players: new Map(),
         patterns: [
             { id: 1, name: 'P1', ch: initialChannels.map(ch => ({ ...ch, grid: [...ch.grid] })), steps: width, },
             { id: 2, name: 'P2', ch: initialChannels.map(ch => ({ ...ch, grid: [...ch.grid]})), steps: width, },
@@ -53,16 +52,22 @@ export const useChannelStore = create((set, get) => ({
         return patterns.find(p => p.id === currentPatternID);
     },
 
-    getPlayer: (id) => get().players.get(id),
-
-    getCurrentChannel: () => {
+    getCurrentChannelName: () => {
         const { patterns, currentPatternID, currentChannelID } = get();
-        const pattern = patterns.find(p => p.id === currentPatternID)
-        return pattern?.ch.find(c => c.id === currentChannelID)
+        const pattern = patterns.find(p => p.id === currentPatternID);
+        return pattern?.ch.find(c => c.id === currentChannelID)?.name;
+    },
+
+    getCurrentChannelUrl: () => {
+        const { patterns, currentPatternID, currentChannelID } = get();
+        const pattern = patterns.find(p => p.id === currentPatternID);
+        return pattern?.ch.find(c => c.id === currentChannelID)?.sampleUrl;
     },
 
     // ── Actions non-undoables (navigation) ───────────────────────────────
     setCurrentPatternID: (id) => set({ currentPatternID: id }),
+
+    setCurrentChannelID: (id) => set({currentChannelID: id}),
 
     // ── Actions undoables ─────────────────────────────────────────────────
 

@@ -6,7 +6,7 @@ import { IoMusicalNotesSharp } from "react-icons/io5";
 import { MdOutlineDeleteOutline } from "react-icons/md";
 import { IoClose } from "react-icons/io5";
 import { GrClear } from "react-icons/gr";
-
+import { useChannelStore } from "../../stores/useChannelStore";
 
 export const CHORD_TYPES = {
   major: [0, 4, 7],
@@ -187,11 +187,14 @@ export const TopBar = ({
   ], [handleDrawMode, handlePaintMode, handleResizeMode, handleChordsMode, deleteSelectedNotes]);
 
   const isChordSelectorDisabled = mode !== "chords";
+  const currentChannel = useChannelStore(s => s.getCurrentChannelName());
 
   return (
     <div className="flex gap-2 mb-2 items-center ml-10">
       {/* Instrument Label */}
-      <label>{selectedInstrument.id}</label>
+      <div>
+        {currentChannel ? currentChannel : "No Channel"}
+      </div>
 
       {/* Close Button */}
       <button 
