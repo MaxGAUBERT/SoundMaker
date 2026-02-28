@@ -4,6 +4,7 @@ import { DRUM_SAMPLES, DEFAULT_CHANNELS } from '../hooks/Samples/useSamples';
 
 const DEFAULT_WIDTH = 16;
 
+
 function createGrid(width = DEFAULT_WIDTH) {
     return Array(width).fill(false);
 }
@@ -20,10 +21,17 @@ export function buildInitialChannelState() {
         width,
         currentPatternID: 1,
         currentChannelID: 0,
-        initialChannels: 4,
         patterns: [
-            { id: 1, name: 'P1', ch: initialChannels.map(ch => ({ ...ch, grid: [...ch.grid] })), steps: width, },
-            { id: 2, name: 'P2', ch: initialChannels.map(ch => ({ ...ch, grid: [...ch.grid]})), steps: width, },
+            { id: 1, name: 'P1', ch: initialChannels.map(ch => ({
+            ...ch,
+            grid: [...ch.grid],
+            pianoData: []  
+            })), steps: width, },
+                        { id: 2, name: 'P2',  ch: initialChannels.map(ch => ({
+            ...ch,
+            grid: [...ch.grid],
+            pianoData: []  
+            })), steps: width, },
         ],
     };
 }
@@ -58,6 +66,12 @@ export const useChannelStore = create((set, get) => ({
         return pattern?.ch.find(c => c.id === currentChannelID)?.name;
     },
 
+    getCurrentChannel: () => {
+        const { patterns, currentPatternID, currentChannelID } = get();
+        const pattern = patterns.find(p => p.id === currentPatternID);
+        return pattern?.ch.find(c => c.id === currentChannelID);
+    },
+
     getCurrentChannelUrl: () => {
         const { patterns, currentPatternID, currentChannelID } = get();
         const pattern = patterns.find(p => p.id === currentPatternID);
@@ -67,7 +81,10 @@ export const useChannelStore = create((set, get) => ({
     // ── Actions non-undoables (navigation) ───────────────────────────────
     setCurrentPatternID: (id) => set({ currentPatternID: id }),
 
-    setCurrentChannelID: (id) => set({currentChannelID: id}),
+    setCurrentChannelID: (id) => {
+      console.log("Setting channel to:", id);
+      get()._mutate({ currentChannelID: id });
+    },
 
     // ── Actions undoables ─────────────────────────────────────────────────
 
@@ -166,7 +183,11 @@ export const useChannelStore = create((set, get) => ({
     handleAddPattern: () => {
         const state = get();
         const newId = state.patterns.length + 1;
-        const clone = state.patterns[0].ch.map(ch => ({ ...ch, grid: [...ch.grid] }));
+        const clone = state.patterns[0].ch.map(ch => ({
+        ...ch,
+        grid: [...ch.grid],
+        pianoData: []
+        }));
         get()._mutate({
             patterns: [...state.patterns, { id: newId, name: `P${newId}`, ch: clone, steps: state.width, pianoData: [] }],
         });
@@ -280,4 +301,5 @@ export const useChannelStore = create((set, get) => ({
     },
 
     reset: () => set(buildInitialChannelState()),
+    
 }));

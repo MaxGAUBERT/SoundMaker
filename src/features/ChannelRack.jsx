@@ -1,4 +1,4 @@
-import { useState, useRef, memo, useCallback } from "react";
+import { useState, useRef, memo} from "react";
 import { useChannelStore } from "../stores/useChannelStore";
 import { useTransport } from "../Contexts/features/TransportContext";
 import { useGlobalColorContext } from "../Contexts/UI/GlobalColorContext";
@@ -70,6 +70,7 @@ const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
     setDragOverIndex(null);
     setIsDragging(false);
   }
+
 
   return (
     <div

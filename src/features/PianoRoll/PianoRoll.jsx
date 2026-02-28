@@ -13,7 +13,7 @@ import { usePianoRollStore } from "../../stores/usePianoRollStore";
 import { usePianoRollNotes } from "../../hooks/piano/usePianoRollNotes";
 
 
-// ── Constantes ────────────────────────────────────────────────────────────────
+// constantes
 export const ROWS        = 48;
 export const CELL_WIDTH  = 20;
 export const CELL_HEIGHT = 20;
@@ -21,9 +21,7 @@ export const noteNames   = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"
 
 const MIN_WINDOW_PERCENT = 2;
 
-
-// ── Sous-composants (inchangés, déjà bien optimisés) ─────────────────────────
-
+// sous composant 
 const GridLines = React.memo(({ rows, cols, cellWidth, cellHeight }) => {
   const hLines = useMemo(() => Array.from({ length: rows + 1 }, (_, i) => (
     <div
@@ -48,6 +46,7 @@ const GridLines = React.memo(({ rows, cols, cellWidth, cellHeight }) => {
   );
 });
 
+// sous composant mémoisé (cellules de grille)
 const VirtualizedCellGrid = React.memo(({ rows, cols, cellWidth, cellHeight, onCellMouseEnter, xToContent }) => {
   const handleMouseMove = useCallback((e) => {
     const rect     = e.currentTarget.getBoundingClientRect();
@@ -66,6 +65,7 @@ const VirtualizedCellGrid = React.memo(({ rows, cols, cellWidth, cellHeight, onC
   );
 });
 
+// labels de mesure
 const MeasureLabels = React.memo(({ cols, cellWidth }) => {
   const labels = useMemo(() => Array.from({ length: Math.ceil(cols / 4) }, (_, i) => (
     <div
@@ -86,8 +86,23 @@ const PianoRoll = () => {
   // ── Stores ────────────────────────────────────────────────────────────────
   const width = useChannelStore((s) => s.width);
   const setWidth = useChannelStore((s) => s.setWidth);
-  const channel = useChannelStore(s => s.getCurrentChannelName());
-  const channelUrl = useChannelStore(s => s.getCurrentChannelUrl());
+  const currentPatternID = useChannelStore(s => s.currentPatternID);
+  const currentChannelID = useChannelStore(s => s.currentChannelID);
+  
+
+  useEffect(() => {
+  console.log("PianoRoll render channel:", currentChannelID);
+}, [currentChannelID]);
+
+  const channel = useChannelStore(s => {
+  const pattern = s.patterns.find(p => p.id === s.currentPatternID);
+  return pattern?.ch.find(c => c.id === s.currentChannelID)?.name;
+  });
+
+  const channelUrl = useChannelStore(s => {
+  const pattern = s.patterns.find(p => p.id === s.currentPatternID);
+  return pattern?.ch.find(c => c.id === s.currentChannelID)?.sampleUrl;
+  });
 
   const {
     mode, selectedNoteId, isMouseDown, isResizing: isResizingStore,
@@ -97,8 +112,8 @@ const PianoRoll = () => {
   } = usePianoRollStore();
 
   // ── Hooks métier ─────────────────────────────────────────────────────────
-  const { getNotes, setNotes, addNote, clearNotes, filterNotesInRange } =
-    usePianoRollNotes();
+  const { notes, setNotes, addNote, clearNotes, filterNotesInRange } =
+    usePianoRollNotes(currentChannelID, currentPatternID);
 
   const samplerRef = useRef(null);
 
@@ -122,7 +137,7 @@ const PianoRoll = () => {
  // useEffect(() => { registerwidthetter(setCurrentStep); }, [registerwidthetter]);
 
   // ── Notes (lecture) ───────────────────────────────────────────────────────
-  const currentNotes = useMemo(() => getNotes(), [getNotes]);
+  const currentNotes = useMemo(() => notes, [notes]);
 
   // ── Zoom ──────────────────────────────────────────────────────────────────
   const naturalWidthPx    = width * CELL_WIDTH;
@@ -181,13 +196,14 @@ const PianoRoll = () => {
       urls: { C5: channelUrl }
     }).toDestination();
 
-    samplerRef.current = sampler;
-
     await sampler.loaded;
 
     if (!mounted) {
       sampler.dispose();
+      return;
     }
+
+    samplerRef.current = sampler;
   };
 
   loadSampler();
@@ -198,7 +214,7 @@ const PianoRoll = () => {
     samplerRef.current = null;
   };
 
-}, [channelUrl]);
+  }, [channelUrl]);
 
   const handlePlaySound = useCallback(async (_, row) => {
   await Tone.start();
@@ -208,7 +224,7 @@ const PianoRoll = () => {
 
   sampler.triggerAttackRelease(rowToNoteName(row), "8n");
 
-}, [channelUrl]);
+}, []);
 
   const handleColsChange = useCallback((newCols) => {
     requestAnimationFrame(() => {
@@ -356,11 +372,11 @@ const PianoRoll = () => {
         const newNote = { id: crypto.randomUUID(), row, start: col, length: 2, height: 1, pitch: ROWS - 1 - row };
         setSelectedNoteId(newNote.id);
         return [...prev, newNote];
-      });
+      }, );
     }
 
     if (mode === "resize") {
-      const note = getNotes().find((n) =>
+      const note = notes().find((n) =>
         row >= n.row && row < n.row + n.height && col >= n.start && col < n.start + n.length
       );
       if (!note) { setSelectedNoteId(null); return; }
@@ -383,11 +399,11 @@ const PianoRoll = () => {
       handlePlaySound(null, row);
     }
   }, [isResizingStore, mode, width, xToContent, setNotes,
-      setSelectedNoteId, getNotes, generateChordNotes, startResizeGrid]);
+      setSelectedNoteId, notes, generateChordNotes, startResizeGrid]);
 
   const toggleMode = useCallback((newMode) => setMode(newMode), [setMode]);
   const clearAll   = useCallback(() => { clearNotes(); setSelectedNoteId(null); }, [clearNotes, setSelectedNoteId]);
-  
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="bg-gray-900 text-white rounded-xl min-h-0">
@@ -444,6 +460,22 @@ const PianoRoll = () => {
                 transform: "translateZ(0)", transition: "left 0.1s linear",
               }}
             />
+
+            
+            {/* Notes */}
+            <div style={{ willChange: "transform" }}>
+              {currentNotes.map((note) => (
+                <NoteBlock
+                  key={note.id}
+                  note={note}
+                  selected={selectedNoteId === note.id}
+                  noteLabel={noteLabelsRef.current[note.row]}
+                  onMouseDown={(e) => handleNoteMouseDown(e, note)}
+                  onResizeLeft={handleResizeLeft}
+                  onResizeRight={handleResizeRight}
+                />
+              ))}
+            </div>
 
 
             <VirtualizedCellGrid

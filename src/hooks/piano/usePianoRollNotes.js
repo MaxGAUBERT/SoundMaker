@@ -1,90 +1,81 @@
-import { useCallback } from "react";
+import { useCallback, useMemo, useRef, useEffect } from "react";
 import { useChannelStore } from "../../stores/useChannelStore";
-import { useHistoryContext } from "../../Contexts/system/HistoryProvider";
 
-export function usePianoRollNotes() {
+export function usePianoRollNotes(currentChannelID, currentPatternID) {
 
-  const {
-    currentPatternID,
-    currentChannelID,
-    patterns,
-    _mutate
-  } = useChannelStore();
+  const patterns = useChannelStore(s => s.patterns);
+  const _mutate  = useChannelStore(s => s._mutate);
 
-  const { dispatchAction } = useHistoryContext();
+  // ── Refs toujours à jour sur les IDs courants ──────────────────────────────
+  // Permet à setNotes (stable) de lire les bons IDs sans les capturer
+  // dans sa closure (ce qui causerait le retour au canal 0).
+  const channelIDRef = useRef(currentChannelID);
+  const patternIDRef = useRef(currentPatternID);
 
+  useEffect(() => {
+    channelIDRef.current = currentChannelID;
+  }, [currentChannelID]);
 
-  // ── Lecture des notes du channel courant ──────────────────────────────────
-  const getNotes = useCallback(() => {
+  useEffect(() => {
+    patternIDRef.current = currentPatternID;
+  }, [currentPatternID]);
+
+  // ─────────────────────────────────────────────
+  // Lecture notes (réactive, pour le rendu)
+  // ─────────────────────────────────────────────
+  const notes = useMemo(() => {
     const pattern = patterns.find(p => p.id === currentPatternID);
     const channel = pattern?.ch.find(c => c.id === currentChannelID);
     return channel?.pianoData ?? [];
   }, [patterns, currentPatternID, currentChannelID]);
-  /*
+
+  // ─────────────────────────────────────────────
+  // Écriture notes — stable grâce aux refs
+  // Les IDs sont toujours frais via channelIDRef/patternIDRef.
+  // patterns est lu via getState() pour éviter la stale closure.
+  // ─────────────────────────────────────────────
   const setNotes = useCallback((notesOrUpdater) => {
-    const currentNotes = getNotes();
-    const next = typeof notesOrUpdater === "function"
-      ? notesOrUpdater(currentNotes)
-      : notesOrUpdater;
+    // IDs toujours frais via les refs
+    const channelID = channelIDRef.current;
+    const patternID = patternIDRef.current;
+
+    // patterns lu au moment de l'appel (jamais périmé)
+    const freshPatterns = useChannelStore.getState().patterns;
+
+    const freshPattern = freshPatterns.find(p => p.id === patternID);
+    const freshChannel = freshPattern?.ch.find(c => c.id === channelID);
+    const currentNotes = freshChannel?.pianoData ?? [];
+
+    const next =
+      typeof notesOrUpdater === "function"
+        ? notesOrUpdater([...currentNotes])
+        : notesOrUpdater;
 
     _mutate({
-      patterns: patterns.map(p =>
-        p.id !== currentPatternID ? p : {
-          ...p,
-          ch: p.ch.map(ch =>
-            ch.id !== currentChannelID ? ch : {
-              ...ch,
-              pianoData: next,
+      patterns: freshPatterns.map(p =>
+        p.id !== patternID
+          ? p
+          : {
+              ...p,
+              ch: p.ch.map(ch =>
+                ch.id !== channelID
+                  ? ch
+                  : { ...ch, pianoData: next }
+              )
             }
-          ),
-        }
-      ),
+      )
     });
-  }, [patterns, currentPatternID, currentChannelID, getNotes, _mutate]);
-  */
+  }, [_mutate]); // stable — tout est lu via refs ou getState()
 
-  const setNotes = useCallback((notesOrUpdater) => {
+  // ─────────────────────────────────────────────
+  // Actions dérivées
+  // ─────────────────────────────────────────────
 
-  const state = useChannelStore.getState();
-
-  const pattern = state.patterns.find(p => p.id === state.currentPatternID);
-  if (!pattern) return;
-
-  const channel = pattern.ch.find(c => c.id === state.currentChannelID);
-  if (!channel) return;
-
-  const currentNotes = channel.pianoData ?? [];
-
-  const next =
-    typeof notesOrUpdater === "function"
-      ? notesOrUpdater([...currentNotes])   // ← clone sécurisée
-      : notesOrUpdater;
-
-  state._mutate({
-    patterns: state.patterns.map(p =>
-      p.id !== state.currentPatternID ? p : {
-        ...p,
-        ch: p.ch.map(ch =>
-          ch.id !== state.currentChannelID ? ch : {
-            ...ch,
-            pianoData: next
-          }
-        )
-      }
-    )
-  });
-
-  console.log(next);
-
-  }, [patterns]);
-
-  // ── Actions dérivées ──────────────────────────────────────────────────────
-
-  const addNote = useCallback(note => {
+  const addNote = useCallback((note) => {
     setNotes(prev => [...prev, note]);
   }, [setNotes]);
 
-  const removeNote = useCallback(noteId => {
+  const removeNote = useCallback((noteId) => {
     setNotes(prev => prev.filter(n => n.id !== noteId));
   }, [setNotes]);
 
@@ -103,7 +94,7 @@ export function usePianoRollNotes() {
   }, [setNotes]);
 
   return {
-    getNotes,
+    notes,
     setNotes,
     addNote,
     removeNote,
