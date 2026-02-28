@@ -80,7 +80,7 @@ export const useChannelStore = create((set, get) => ({
 
     // ── Actions non-undoables (navigation) ───────────────────────────────
     setCurrentPatternID: (id) => set({ currentPatternID: id }),
-
+    
     setCurrentChannelID: (id) => {
       console.log("Setting channel to:", id);
       get()._mutate({ currentChannelID: id });
