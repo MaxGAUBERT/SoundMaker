@@ -4,24 +4,26 @@ import { useTransport} from "../../Contexts/features/TransportContext";
 import { useChannelStore} from "../../stores/useChannelStore";
 import { rowToNoteName } from "../../features/PianoRoll/utils/noteUtils";
 
-export function usePianoRollAudio(numCols) {
-  const { isPlaying, playMode } = useTransport();
-  const selectedPatternID = useChannelStore((s) => s.selectedPatternID);
+export function usePianoRollAudio(steps) {
+  const {isPlaying, mode} = useTransport();
+  const selectedPatternID = useChannelStore((s) => s.currentPatternID);
   const pattern = useChannelStore((s) => s.pattern);
 
   // Refs stables — évitent de recréer la Loop à chaque changement d'pattern
   const patternRef    = useRef(pattern);
   const selectedPatternIDRef = useRef(selectedPatternID);
-  const playModeRef          = useRef(playMode);
-  const numColsRef           = useRef(numCols);
+  const playModeRef          = useRef(mode);
+  const widthRef           = useRef(steps);
+  const isPlayingRef = useRef(isPlaying);
 
   useEffect(() => { patternRef.current    = pattern;    }, [pattern]);
   useEffect(() => { selectedPatternIDRef.current = selectedPatternID; }, [selectedPatternID]);
-  useEffect(() => { playModeRef.current          = playMode;          }, [playMode]);
-  useEffect(() => { numColsRef.current           = numCols;           }, [numCols]);
+  useEffect(() => { playModeRef.current = mode; }, [mode]);
+  useEffect(() => { widthRef.current           = steps;           }, [steps]);
+  useEffect(() => {isPlayingRef.current = isPlaying;}, [isPlaying]);
 
   const stepRef       = useRef(0);
-  const setStepRef    = useRef(null); // setter exposé pour le playhead UI
+  const setStepRef    = useRef(null);
   const loopRef       = useRef(null);
 
   // Le composant injecte son setter de currentStep ici
@@ -30,7 +32,7 @@ export function usePianoRollAudio(numCols) {
   }, []);
 
   useEffect(() => {
-    if (!isPlaying || playMode !== "Pattern") {
+    if (!isPlaying || mode !== "pattern") {
       // Nettoyage
       loopRef.current?.dispose();
       loopRef.current = null;
@@ -41,21 +43,24 @@ export function usePianoRollAudio(numCols) {
       return;
     }
 
-    if (loopRef.current) return; // déjà actif
+    if (loopRef.current) {
+      console.log("detected loop ref as:", loopRef.current);
+      return;
+    }
 
     loopRef.current = new Tone.Loop((time) => {
       const step       = stepRef.current;
       const iList      = patternRef.current;
       const patternID  = selectedPatternIDRef.current;
       const pMode      = playModeRef.current;
-      const cols       = numColsRef.current;
+      const cols       = widthRef.current;
 
       setStepRef.current?.(step);
 
       if (pMode === "Pattern") {
         Object.entries(iList).forEach(([name, data]) => {
           if (data.muted) return;
-          const sampler    = selectedPatternID.sampler;
+          const sampler    = data.sampler;
           const pianoData  = data.pianoData?.[patternID] ?? [];
 
           pianoData
@@ -82,7 +87,7 @@ export function usePianoRollAudio(numCols) {
       loopRef.current?.dispose();
       loopRef.current = null;
     };
-  }, [isPlaying, playMode]);
+  }, [isPlaying, mode]);
 
   // Arrêt propre
   useEffect(() => {

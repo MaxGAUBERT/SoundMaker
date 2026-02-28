@@ -8,11 +8,10 @@ import AppProviders from './Contexts/features/AppProviders';
 import PianoRoll from './features/PianoRoll/PianoRoll';
 
 export default function App() {
-  const [leftWidth, setLeftWidth] = useState(50);
+  const [leftWidth, setLeftWidth] = useState(60);
   const [isDraggingH, setIsDraggingH] = useState(false);
 
-  // Vertical split between ChannelRack and PianoRoll (% of left panel height)
-  const [topHeight, setTopHeight] = useState(60);
+  const [topHeight, setTopHeight] = useState(50);
   const [isDraggingV, setIsDraggingV] = useState(false);
   const leftPanelRef = useRef(null);
 

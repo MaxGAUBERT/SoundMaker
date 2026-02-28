@@ -11,7 +11,7 @@ import { rowToNoteName }     from "../../features/PianoRoll/utils/noteUtils";
 import { useChannelStore }  from "../../stores/useChannelStore";
 import { usePianoRollStore } from "../../stores/usePianoRollStore";
 import { usePianoRollNotes } from "../../hooks/piano/usePianoRollNotes";
-
+import {usePianoRollAudio} from "../../hooks/piano/usePianoRollAudio";
 
 // constantes
 export const ROWS        = 48;
@@ -85,14 +85,12 @@ const MeasureLabels = React.memo(({ cols, cellWidth }) => {
 const PianoRoll = () => {
   // ── Stores ────────────────────────────────────────────────────────────────
   const width = useChannelStore((s) => s.width);
+  const steps = useChannelStore((s) => s.steps);
   const setWidth = useChannelStore((s) => s.setWidth);
   const currentPatternID = useChannelStore(s => s.currentPatternID);
   const currentChannelID = useChannelStore(s => s.currentChannelID);
-  
 
-  useEffect(() => {
-  console.log("PianoRoll render channel:", currentChannelID);
-}, [currentChannelID]);
+
 
   const channel = useChannelStore(s => {
   const pattern = s.patterns.find(p => p.id === s.currentPatternID);
@@ -133,8 +131,10 @@ const PianoRoll = () => {
 
   useEffect(() => { modeRef.current = mode; }, [mode]);
 
+  const { registerStepSetter } = usePianoRollAudio(steps);
+
   // Enregistrer le setter de step pour l'audio hook
- // useEffect(() => { registerwidthetter(setCurrentStep); }, [registerwidthetter]);
+   useEffect(() => { registerStepSetter(setCurrentStep); }, [registerStepSetter]);
 
   // ── Notes (lecture) ───────────────────────────────────────────────────────
   const currentNotes = useMemo(() => notes, [notes]);

@@ -19,7 +19,7 @@ export const initialState = {
   bpm: 130,
   mode: "pattern", 
   metronomeEnabled: false,
-  loopEnabled: true,
+  loopEnabled: false,
   timeSignature: { numerator: 4, denominator: 4 },
 };
 

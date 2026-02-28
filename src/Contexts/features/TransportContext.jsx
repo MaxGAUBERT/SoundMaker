@@ -3,12 +3,13 @@ import * as Tone from "tone";
 import { useChannels } from "./ChannelProvider";
 import { TRANSPORT_ACTIONS, initialState, transportReducer } from "../../reducers/transportReducer";
 import { usePlaylist } from "./PlaylistProvider";
+import { rowToNoteName } from "../../features/PianoRoll/utils/noteUtils";
 
 const TransportContext = createContext();
 
 export function TransportProvider({ children }) {
   const [state, dispatch] = useReducer(transportReducer, initialState);
-  const { patterns, currentPatternID, width } = useChannels();
+  const { patterns, currentPatternID, width} = useChannels();
   const { playlistGrid } = usePlaylist();
 
   const loopRef = useRef(null);
@@ -20,6 +21,7 @@ export function TransportProvider({ children }) {
   const metronomeEnabledRef = useRef(state.metronomeEnabled);
   const modeRef = useRef(state.mode);
   const isPlayingRef = useRef(state.isPlaying);
+  const loopEnabledRef = useRef(state.loopEnabled);
   const widthRef = useRef(width);
   const patternsRef = useRef(patterns);
   const currentPatternIDRef = useRef(currentPatternID);
@@ -32,9 +34,11 @@ export function TransportProvider({ children }) {
   useEffect(() => { patternsRef.current = patterns; }, [patterns]);
   useEffect(() => { currentPatternIDRef.current = currentPatternID; }, [currentPatternID]);
   useEffect(() => { playlistGridRef.current = playlistGrid; }, [playlistGrid]);
+  useEffect(() => { 
+    loopEnabledRef.current = state.loopEnabled; 
+  }, [state.loopEnabled]);
 
-  // ─────────────────────────────────────────────────────────────
-  // Load samplers (1 par channel id)
+
   useEffect(() => {
     let cancelled = false;
 
@@ -91,115 +95,162 @@ export function TransportProvider({ children }) {
     };
   }, []);
 
-  // ─────────────────────────────────────────────────────────────
-  // Main loop (ne dépend que de isPlaying)
   useEffect(() => {
-    const start = async () => {
-      if (!state.isPlaying) {
-        Tone.Transport.stop();
-        if (loopRef.current) {
-          loopRef.current.dispose();
-          loopRef.current = null;
+  // ── Nettoyage systématique avant tout ────────────────────────────────────
+  const cleanup = () => {
+    if (loopRef.current) {
+      loopRef.current.stop();
+      loopRef.current.dispose();
+      loopRef.current = null;
+    }
+    Tone.Transport.stop();
+    Tone.Transport.cancel(); 
+    Tone.Transport.position = 0;
+    stepIndexRef.current = 0;
+    dispatch({ type: TRANSPORT_ACTIONS.SET_CURRENT_STEP, payload: 0 });
+  };
+
+  if (!state.isPlaying) {
+    cleanup();
+    return;
+  }
+
+  const start = async () => {
+    await Tone.start();
+
+    // nettoyage
+    cleanup();
+
+    let step = 0;
+
+    loopRef.current = new Tone.Loop((time) => {
+      const mode      = modeRef.current;
+      const w         = widthRef.current;
+      const pats      = patternsRef.current;
+      const curPatId  = currentPatternIDRef.current;
+      const pg        = playlistGridRef.current;
+
+      // ── Métronome ─────────────────────────────────────────────────────────
+      if (metronomeEnabledRef.current && step % 4 === 0 && metronomeSynthRef.current) {
+        metronomeSynthRef.current.triggerAttackRelease(
+          step % w === 0 ? "C6" : "C5",
+          "16n",
+          time
+        );
+      }
+
+      // ── Pattern mode ──────────────────────────────────────────────────────
+      if (mode === "pattern") {
+        const localStep = step % w;
+        const pat = pats.find((p) => p.id === curPatId);
+
+        if (pat) {
+          pat.ch.forEach((ch) => {
+            const sampler = samplersRef.current.get(ch.id);
+            if (!sampler?.loaded) return;
+
+            if (ch.pianoData?.length > 0) {
+              ch.pianoData
+                .filter((n) => n.start === localStep)
+                .forEach((n) => {
+                  const noteName = rowToNoteName(n.row);
+                  const duration = new Tone.Time("16n").toSeconds() * n.length;
+                  try {
+                    sampler.triggerAttackRelease(noteName, duration, time);
+                  } catch (err) {
+                    console.error(`[PianoRoll] ${ch.id}:`, err);
+                  }
+                });
+              return; 
+            }
+
+            // Step sequencer classique
+            if (ch.grid?.[localStep]) {
+              sampler.triggerAttackRelease("C5", "16n", time);
+            }
+          });
         }
-        stepIndexRef.current = 0;
-        dispatch({ type: TRANSPORT_ACTIONS.SET_CURRENT_STEP, payload: 0 });
+
+        Tone.Draw.schedule(() => {
+          dispatch({ type: TRANSPORT_ACTIONS.SET_CURRENT_STEP, payload: localStep });
+          stepIndexRef.current = localStep;
+        }, time);
+
+        
+        step = (step + 1) % w;
         return;
       }
 
-      await Tone.start();
+      // ── Song mode ─────────────────────────────────────────────────────────
+      if (mode === "song") {
+        const patternLength = w;
+        const totalCols     = pg?.[0]?.grid?.length ?? 0;
+        if (!totalCols) return;
 
-      stepIndexRef.current = 0;
-      let step = 0;
+        const colIndex  = Math.floor(step / patternLength) % totalCols;
+        const localStep = step % patternLength;
 
-      if (loopRef.current) {
-        loopRef.current.dispose();
-        loopRef.current = null;
-      }
+        pg.forEach((track) => {
+          const patternId = track.grid?.[colIndex];
+          if (!patternId) return;
 
-      loopRef.current = new Tone.Loop((time) => {
-        const global = step;
-
-        const mode = modeRef.current;
-        const w = widthRef.current;
-        const pats = patternsRef.current;
-        const curPatId = currentPatternIDRef.current;
-        const pg = playlistGridRef.current;
-
-        // METRONOME
-        if (metronomeEnabledRef.current && global % 4 === 0 && metronomeSynthRef.current) {
-          metronomeSynthRef.current.triggerAttackRelease(global === 0 ? "C6" : "C5", "16n", time);
-        }
-
-        // PATTERN MODE
-        if (mode === "pattern") {
-          const localStep = global % w;
-          const pat = pats.find((p) => p.id === curPatId);
+          const pat = pats.find((p) => p.id === patternId);
           if (!pat) return;
 
           pat.ch.forEach((ch) => {
-            if (!ch.grid?.[localStep]) return;
             const sampler = samplersRef.current.get(ch.id);
-            if (!sampler) return;
-            sampler.triggerAttackRelease("C5", "16n", time);
-          });
+            if (!sampler?.loaded) return;
 
-          Tone.Draw.schedule(() => {
-            dispatch({ type: TRANSPORT_ACTIONS.SET_CURRENT_STEP, payload: global });
-            stepIndexRef.current = global;
-          }, time);
+            if (ch.pianoData?.length > 0) {
+              ch.pianoData
+                .filter((n) => n.start === localStep)
+                .forEach((n) => {
+                  const noteName = rowToNoteName(n.row);
+                  const duration = new Tone.Time("16n").toSeconds() * n.length;
+                  try {
+                    sampler.triggerAttackRelease(noteName, duration, time);
+                  } catch (err) {
+                    console.error(`[PianoRoll Song] ${ch.id}:`, err);
+                  }
+                });
+              return;
+            }
 
-          step = (global + 1) % w;
-          return;
-        }
-
-        // SONG MODE
-        if (mode === "song") {
-          const patternLength = w;
-          const totalCols = pg?.[0]?.grid?.length ?? 0;
-          if (!totalCols) return;
-
-          const colIndex = Math.floor(global / patternLength) % totalCols;
-          const localStep = global % patternLength;
-
-          pg.forEach((track) => {
-            const patternId = track.grid?.[colIndex];
-            if (!patternId) return;
-
-            const pat = pats.find((p) => p.id === patternId);
-            if (!pat) return;
-
-            pat.ch.forEach((ch) => {
-              if (!ch.grid?.[localStep]) return;
-              const sampler = samplersRef.current.get(ch.id);
-              if (!sampler) return;
+            if (ch.grid?.[localStep]) {
               sampler.triggerAttackRelease("C5", "16n", time);
-            });
+            }
           });
+        });
 
-          Tone.Draw.schedule(() => {
-            dispatch({ type: TRANSPORT_ACTIONS.SET_CURRENT_STEP, payload: global });
-            stepIndexRef.current = global;
-          }, time);
+        Tone.Draw.schedule(() => {
+          const globalStep = step % (patternLength * totalCols);
+          dispatch({ type: TRANSPORT_ACTIONS.SET_CURRENT_STEP, payload: globalStep });
+          stepIndexRef.current = globalStep;
+        }, time);
 
-          const totalSteps = patternLength * totalCols;
-          step = (global + 1) % totalSteps;
+        const totalSteps = patternLength * totalCols;
+
+        if (loopEnabledRef.current) {
+          step = (step + 1) % totalSteps;
+        } else {
+          step = step + 1;
+          if (stepIndexRef.current >= totalSteps){
+            Tone.Draw.schedule(() => {
+              dispatch({ type: TRANSPORT_ACTIONS.SET_IS_PLAYING, payload: false });
+            }, time);
+          }
         }
-      }, "16n");
-
-      loopRef.current.start(0);
-      Tone.Transport.start();
-    };
-
-    start();
-
-    return () => {
-      Tone.Transport.stop();
-      if (loopRef.current) {
-        loopRef.current.dispose();
-        loopRef.current = null;
       }
-    };
-  }, [state.isPlaying]);
+    }, "16n");
+
+    loopRef.current.start(0);
+    Tone.Transport.start();
+  };
+
+  start();
+
+  return cleanup; 
+}, [state.isPlaying]);
 
   // BPM
   useEffect(() => {
