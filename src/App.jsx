@@ -105,7 +105,7 @@ export default function App() {
                   : 'bg-gray-700 hover:bg-blue-400'
               }`}
               onMouseDown={handleMouseDownV}
-              title="Maintenir pour redimensionner"
+              title="Hold to resize"
             >
               {/* Grip dots */}
               <div className="flex gap-1 pointer-events-none">
