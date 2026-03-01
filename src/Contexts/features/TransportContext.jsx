@@ -4,6 +4,8 @@ import { useChannels } from "./ChannelProvider";
 import { TRANSPORT_ACTIONS, initialState, transportReducer } from "../../reducers/transportReducer";
 import { usePlaylist } from "./PlaylistProvider";
 import { rowToNoteName } from "../../features/PianoRoll/utils/noteUtils";
+import { CELL_WIDTH} from "../../features/PianoRoll/PianoRoll";
+import { usePlaylistStore } from "../../stores/usePlaylistStore";
 
 const TransportContext = createContext();
 
@@ -11,13 +13,19 @@ export function TransportProvider({ children }) {
   const [state, dispatch] = useReducer(transportReducer, initialState);
   const { patterns, currentPatternID, width} = useChannels();
   const { playlistGrid } = usePlaylist();
-
+  const pWidth = usePlaylistStore(s => s.pWidth);
+  
+  // song selection
+  const isSelecting = usePlaylistStore(s => s.isSelecting);
+  const startSelection = usePlaylistStore(s => s.startSelection);
+  const selectionEnd = usePlaylistStore(s => s.selectionEnd);
   const loopRef = useRef(null);
   const metronomeSynthRef = useRef(null);
   const samplersRef = useRef(new Map());
   const stepIndexRef = useRef(0);
+  const widthOfPlaylist = useRef(pWidth);
 
-  // Refs pour éviter de relancer la loop quand ces flags changent
+  // Refs 
   const metronomeEnabledRef = useRef(state.metronomeEnabled);
   const modeRef = useRef(state.mode);
   const isPlayingRef = useRef(state.isPlaying);
@@ -26,6 +34,9 @@ export function TransportProvider({ children }) {
   const patternsRef = useRef(patterns);
   const currentPatternIDRef = useRef(currentPatternID);
   const playlistGridRef = useRef(playlistGrid);
+  const isSelectingRef = useRef(isSelecting);
+  const startSelectionRef = useRef(startSelection);
+  const selectionEndRef = useRef(selectionEnd);
 
   useEffect(() => { metronomeEnabledRef.current = state.metronomeEnabled; }, [state.metronomeEnabled]);
   useEffect(() => { modeRef.current = state.mode; }, [state.mode]);
@@ -37,6 +48,11 @@ export function TransportProvider({ children }) {
   useEffect(() => { 
     loopEnabledRef.current = state.loopEnabled; 
   }, [state.loopEnabled]);
+  useEffect(() => { isSelectingRef.current = isSelecting; }, [isSelecting]);
+  useEffect(() => { startSelectionRef.current = startSelection; }, [startSelection]);
+  useEffect(() => { selectionEndRef.current = selectionEnd; }, [selectionEnd]);
+
+  useEffect(() => {widthOfPlaylist.current = pWidth;}, [pWidth]);
 
 
   useEffect(() => {
@@ -184,10 +200,22 @@ export function TransportProvider({ children }) {
       // ── Song mode ─────────────────────────────────────────────────────────
       if (mode === "song") {
         const patternLength = w;
-        const totalCols     = pg?.[0]?.grid?.length ?? 0;
+        const sel   = isSelectingRef.current;
+        const start = startSelectionRef.current;
+        const end   = selectionEndRef.current;
+        const HEADER_TO_GRID = widthOfPlaylist.current / 2;
+        const offset = sel && start !== null
+        ? Math.round(start / HEADER_TO_GRID)
+        : 0;
+        const totalCols = sel && start !== null
+        ? Math.round((end - start + 1) / HEADER_TO_GRID)
+        : pg?.[0]?.grid?.length ?? 0;
+        console.log(HEADER_TO_GRID);
+        pg?.[0]?.grid?.length ?? 0;
         if (!totalCols) return;
 
-        const colIndex  = Math.floor(step / patternLength) % totalCols;
+        
+        const colIndex  = (Math.floor(step / patternLength) % totalCols) + offset;
         const localStep = step % patternLength;
 
         pg.forEach((track) => {
@@ -223,15 +251,24 @@ export function TransportProvider({ children }) {
         });
 
         Tone.Draw.schedule(() => {
-          const globalStep = step % (patternLength * totalCols);
+          const globalStep = (step % (patternLength * totalCols)) + (offset * patternLength);
           dispatch({ type: TRANSPORT_ACTIONS.SET_CURRENT_STEP, payload: globalStep });
           stepIndexRef.current = globalStep;
         }, time);
 
         const totalSteps = patternLength * totalCols;
 
-
         step = (step + 1) % totalSteps;
+
+        console.log({
+        isSelecting,
+        startSelection,
+        selectionEnd,
+        HEADER_TO_GRID,
+        totalCols,
+        offset,
+        pWidth: widthOfPlaylist.current
+      });
        
       }
     }, "16n");
@@ -255,7 +292,7 @@ export function TransportProvider({ children }) {
   const play = useCallback(() => dispatch({ type: TRANSPORT_ACTIONS.PLAY }), []);
   const pause = useCallback(() => dispatch({ type: TRANSPORT_ACTIONS.PAUSE }), []);
   const stop = useCallback(() => {
-    stepIndexRef.current = 0;
+    stepIndexRef.current = isSelecting ? startSelection : 0;
     dispatch({ type: TRANSPORT_ACTIONS.STOP });
   }, []);
 

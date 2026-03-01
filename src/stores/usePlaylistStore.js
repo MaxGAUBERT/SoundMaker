@@ -43,6 +43,23 @@ export const usePlaylistStore = create((set, get) => ({
             set(next);
         }
     },
+    // gestion de la sélection 
+    startSelection: null,
+    isSelecting: false,
+    selectionEnd: null,
+    selectedIds: [],
+    setSelection: (start, end) => set({
+        startSelection: start,
+        selectionEnd: end,
+        isSelecting: true,
+        selectedIds: Array.from({ length: end - start + 1 }, (_, i) => start + i)
+    }),
+    clearSelection: () => set({
+        startSelection: null,
+        selectionEnd: null,
+        isSelecting: false,
+        selectedIds: []
+    }),
 
     // ── Actions non-undoables ─────────────────────────────────────────────
     setSelectedPatternId: (id) => set({ selectedPatternId: id }),

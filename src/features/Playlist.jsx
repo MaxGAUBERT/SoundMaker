@@ -5,7 +5,6 @@ import { usePlaylistStore } from "../stores/usePlaylistStore";
 import { useGlobalColorContext } from "../Contexts/UI/GlobalColorContext";
 import { RxWidth, RxHeight } from "react-icons/rx";
 import { useTransport } from "../Contexts/features/TransportContext";
-import useSongSelection from "../hooks/Playlist/useSongSelection";
 
 const CELL_W = 8;  // w-8
 const CELL_H = 56;  // h-14
@@ -193,8 +192,14 @@ const Playlist = memo(() => {
   const clearCellRaw = usePlaylistStore((s) => s.clearCell);
   const renameTracks = usePlaylistStore((s) => s.renameTracks);
 
-  const {selectedIds, setSelectedIds, clearSelection, selectionRef, isSelecting, holdTimer} = useSongSelection();
-
+  // sélection playlist
+  const isSelectingRef = useRef(false);
+  const startSelection = usePlaylistStore(s => s.startSelection);
+  const selectionEnd = usePlaylistStore(s => s.selectionEnd);
+  const clearSelection = usePlaylistStore(s => s.clearSelection);
+  const selectedIds = usePlaylistStore(s => s.selectedIds);
+  const setSelection = usePlaylistStore(s => s.setSelection);
+  const holdTimer = useRef(null);
 
   const { colorsComponent } = useGlobalColorContext();
   const { currentStep, isPlaying } = useTransport();
@@ -216,35 +221,30 @@ const Playlist = memo(() => {
     [clearCellRaw]
   );
 
-  function handleMouseDown(idx){
-    holdTimer.current = setTimeout(() => {
-      isSelecting.current = true;
-      selectionRef.current.start = idx;
-      selectionRef.current.end = idx;
-      setSelectedIds(new Set([idx]))
+  function handleMouseDown(idx) {
+  holdTimer.current = setTimeout(() => {
+    isSelectingRef.current = true;
+    setSelection(idx, idx); 
     }, 300);
   }
 
+
   function handleMouseEnter(idx){
-    if (!isSelecting.current) return;
-    selectionRef.current.end = idx;
+    if (!isSelectingRef.current) return;
 
-    const from = Math.min(selectionRef.current.start, idx);
-    const to   = Math.max(selectionRef.current.start, idx);
 
-    const range = new Set(
-      Array.from({ length: to - from + 1 }, (_, i) => from + i)
-    );
-    setSelectedIds(range);
-    console.log("selection:", range);
+    const from = Math.min(startSelection, idx);
+    const to   = Math.max(startSelection, idx);
+    setSelection(from, to);
+    console.log("Selection from:", from, "to :", to);
   }
 
   // terminer la sélection
   useEffect(() => {
     const stop = () => {
       clearTimeout(holdTimer.current);
-      isSelecting.current = false;
-    }
+      isSelectingRef.current = false;
+  }
 
     document.addEventListener("mouseup", stop);
     return () => document.removeEventListener("mouseup", stop);
@@ -274,13 +274,13 @@ const Playlist = memo(() => {
             onDoubleClick={clearSelection}
             className={`w-8 h-8 text-xs flex items-center justify-center border-r cursor-pointer select-none relative
               ${i % 4 === 0 ? "border-r-gray-500 bg-gray-800" : "border-r-gray-700"}
-              ${selectedIds.has(i) ? "text-white" : "text-gray-400"}
+              ${selectedIds.includes(i) ? "text-white" : "text-gray-400"}
             `}
           >
             {i % 4 === 0 ? Math.floor(i / 4) + 1 : ""}
 
             {/* ✅ Barre fine absolue en bas */}
-            {selectedIds.has(i) && (
+            {selectedIds.includes(i) && (
               <div className="absolute bottom-0 left-0 right-0 bg-red-500" style={{ height: "2px" }} />
             )}
           </div>
