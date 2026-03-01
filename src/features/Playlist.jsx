@@ -1,10 +1,11 @@
 // components/Playlist.jsx
-import React, { useMemo, useCallback, useState, useEffect, memo } from "react";
+import React, { useMemo, useCallback, useState, useEffect, memo, useRef } from "react";
 import { useChannelStore } from "../stores/useChannelStore";
 import { usePlaylistStore } from "../stores/usePlaylistStore";
 import { useGlobalColorContext } from "../Contexts/UI/GlobalColorContext";
 import { RxWidth, RxHeight } from "react-icons/rx";
 import { useTransport } from "../Contexts/features/TransportContext";
+import usePlaylist from "../hooks/Playlist/usePlaylist";
 
 const CELL_W = 8;  // w-8
 const CELL_H = 56;  // h-14
@@ -192,6 +193,8 @@ const Playlist = memo(() => {
   const clearCellRaw = usePlaylistStore((s) => s.clearCell);
   const renameTracks = usePlaylistStore((s) => s.renameTracks);
 
+  const {selectedIds, setSelectedIds, selectionRef, isSelecting, holdTimer} = usePlaylist();
+
 
   const { colorsComponent } = useGlobalColorContext();
   const { currentStep, isPlaying } = useTransport();
@@ -213,6 +216,40 @@ const Playlist = memo(() => {
     [clearCellRaw]
   );
 
+  function handleMouseDown(idx){
+    holdTimer.current = setTimeout(() => {
+      isSelecting.current = true;
+      selectionRef.current.start = idx;
+      selectionRef.current.end = idx;
+      setSelectedIds(new Set([idx]))
+    }, 300);
+  }
+
+  function handleMouseEnter(idx){
+    if (!isSelecting.current) return;
+    selectionRef.current.end = idx;
+
+    const from = Math.min(selectionRef.current.start, idx);
+    const to   = Math.max(selectionRef.current.start, idx);
+
+    const range = new Set(
+      Array.from({ length: to - from + 1 }, (_, i) => from + i)
+    );
+    setSelectedIds(range);
+    console.log("selection:", range);
+  }
+
+  // terminer la sélection
+  useEffect(() => {
+    const stop = () => {
+      clearTimeout(holdTimer.current);
+      isSelecting.current = false;
+    }
+
+    document.addEventListener("mouseup", stop);
+    return () => document.removeEventListener("mouseup", stop);
+  }, [])
+
   const headerRow = useMemo(() => {
     return (
       <div
@@ -220,7 +257,7 @@ const Playlist = memo(() => {
           borderColor: colorsComponent.Border,
           backgroundColor: colorsComponent.Background,
         }}
-        className="flex sticky top-0 z-20 border-b"
+        className="flex relative top-0 z-20 border-b"
       >
         <div
           style={{
@@ -230,18 +267,26 @@ const Playlist = memo(() => {
           className="w-20 border-r flex items-center justify-center text-xs"
         />
         {Array.from({ length: pWidth * CELL_W / 2 }).map((_, i) => (
-          <div
+         <div
             key={i}
-            className={`w-8 h-8 text-xs text-gray-400 flex items-center justify-center border-r ${
-              i % 4 === 0 ? "border-r-gray-500 bg-gray-800" : "border-r-gray-700"
-            }`}
+            onMouseDown={() => handleMouseDown(i)}
+            onMouseEnter={() => handleMouseEnter(i)}
+            className={`w-8 h-8 text-xs flex items-center justify-center border-r cursor-pointer select-none relative
+              ${i % 4 === 0 ? "border-r-gray-500 bg-gray-800" : "border-r-gray-700"}
+              ${selectedIds.has(i) ? "text-white" : "text-gray-400"}
+            `}
           >
             {i % 4 === 0 ? Math.floor(i / 4) + 1 : ""}
+
+            {/* ✅ Barre fine absolue en bas */}
+            {selectedIds.has(i) && (
+              <div className="absolute bottom-0 left-0 right-0 bg-red-500" style={{ height: "2px" }} />
+            )}
           </div>
         ))}
       </div>
     );
-  }, [pWidth, colorsComponent]);
+  },[pWidth, selectedIds, handleMouseDown, handleMouseEnter]);
 
   const patternMap = useMemo(() => {
     const map = Object.create(null);
@@ -316,7 +361,7 @@ const Playlist = memo(() => {
         </div>
 
         <div style={{ color: colorsComponent.Text }} className="text-[10px] mt-2">
-          Left click: place | Right click: remove | Double click: edit
+          Left click: place | Click + hold: song selection | Right click: remove | Double click: edit
         </div>
       </div>
 

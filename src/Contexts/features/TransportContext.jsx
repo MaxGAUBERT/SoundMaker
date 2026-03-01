@@ -230,16 +230,9 @@ export function TransportProvider({ children }) {
 
         const totalSteps = patternLength * totalCols;
 
-        if (loopEnabledRef.current) {
-          step = (step + 1) % totalSteps;
-        } else {
-          step = step + 1;
-          if (stepIndexRef.current >= totalSteps){
-            Tone.Draw.schedule(() => {
-              dispatch({ type: TRANSPORT_ACTIONS.SET_IS_PLAYING, payload: false });
-            }, time);
-          }
-        }
+
+        step = (step + 1) % totalSteps;
+       
       }
     }, "16n");
 
