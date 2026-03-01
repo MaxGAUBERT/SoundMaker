@@ -5,7 +5,7 @@ import { usePlaylistStore } from "../stores/usePlaylistStore";
 import { useGlobalColorContext } from "../Contexts/UI/GlobalColorContext";
 import { RxWidth, RxHeight } from "react-icons/rx";
 import { useTransport } from "../Contexts/features/TransportContext";
-import usePlaylist from "../hooks/Playlist/usePlaylist";
+import useSongSelection from "../hooks/Playlist/useSongSelection";
 
 const CELL_W = 8;  // w-8
 const CELL_H = 56;  // h-14
@@ -193,7 +193,7 @@ const Playlist = memo(() => {
   const clearCellRaw = usePlaylistStore((s) => s.clearCell);
   const renameTracks = usePlaylistStore((s) => s.renameTracks);
 
-  const {selectedIds, setSelectedIds, selectionRef, isSelecting, holdTimer} = usePlaylist();
+  const {selectedIds, setSelectedIds, clearSelection, selectionRef, isSelecting, holdTimer} = useSongSelection();
 
 
   const { colorsComponent } = useGlobalColorContext();
@@ -271,6 +271,7 @@ const Playlist = memo(() => {
             key={i}
             onMouseDown={() => handleMouseDown(i)}
             onMouseEnter={() => handleMouseEnter(i)}
+            onDoubleClick={clearSelection}
             className={`w-8 h-8 text-xs flex items-center justify-center border-r cursor-pointer select-none relative
               ${i % 4 === 0 ? "border-r-gray-500 bg-gray-800" : "border-r-gray-700"}
               ${selectedIds.has(i) ? "text-white" : "text-gray-400"}
@@ -355,13 +356,13 @@ const Playlist = memo(() => {
                   : "bg-gray-700 text-gray-300 hover:bg-gray-600"
               }`}
             >
-              {p.name}
+              {"Pattern" + " " + p.id}
             </button>
           ))}
         </div>
 
         <div style={{ color: colorsComponent.Text }} className="text-[10px] mt-2">
-          Left click: place | Click + hold: song selection | Right click: remove | Double click: edit
+          Left click: place | Click + hold: song selection, Double click: clear selection | Right click: remove | Double click: edit
         </div>
       </div>
 
