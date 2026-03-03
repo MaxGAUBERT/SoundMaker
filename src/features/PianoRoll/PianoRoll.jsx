@@ -91,7 +91,6 @@ const PianoRoll = () => {
   const currentChannelID = useChannelStore(s => s.currentChannelID);
 
 
-
   const channel = useChannelStore(s => {
   const pattern = s.patterns.find(p => p.id === s.currentPatternID);
   return pattern?.ch.find(c => c.id === s.currentChannelID)?.name;
@@ -101,6 +100,7 @@ const PianoRoll = () => {
   const pattern = s.patterns.find(p => p.id === s.currentPatternID);
   return pattern?.ch.find(c => c.id === s.currentChannelID)?.sampleUrl;
   });
+  
 
   const {
     mode, selectedNoteId, isMouseDown, isResizing: isResizingStore,
@@ -110,8 +110,8 @@ const PianoRoll = () => {
   } = usePianoRollStore();
 
   // ── Hooks métier ─────────────────────────────────────────────────────────
-  const { notes, setNotes, addNote, clearNotes, filterNotesInRange } =
-    usePianoRollNotes(currentChannelID, currentPatternID);
+  const { notes, setNotes, clearNotes, filterNotesInRange } =
+    usePianoRollNotes(currentPatternID, currentChannelID );
 
   const samplerRef = useRef(null);
 
@@ -221,7 +221,7 @@ const PianoRoll = () => {
 
   const sampler = samplerRef.current;
   if (!sampler) return;
-
+  
   sampler.triggerAttackRelease(rowToNoteName(row), "8n");
 
 }, []);
@@ -304,7 +304,7 @@ const PianoRoll = () => {
   }, [isResizingLocal, isResizingStore, initialNote, initialMouseX, resizeMode, resizeDirection,
       selectedNoteId, scaleX, width, setNotes, xToContent]);
 
-  const handleMouseUp = useCallback(() => {
+  const handleMouseUp = useCallback(() => { 
     if (isResizingLocal) {
       setIsResizingLocal(false);
       setResizeMode(null);
@@ -372,11 +372,13 @@ const PianoRoll = () => {
         const newNote = { id: crypto.randomUUID(), row, start: col, length: 2, height: 1, pitch: ROWS - 1 - row };
         setSelectedNoteId(newNote.id);
         return [...prev, newNote];
+        
       }, );
     }
 
+
     if (mode === "resize") {
-      const note = notes().find((n) =>
+      const note = notes.find((n) =>
         row >= n.row && row < n.row + n.height && col >= n.start && col < n.start + n.length
       );
       if (!note) { setSelectedNoteId(null); return; }
@@ -402,13 +404,14 @@ const PianoRoll = () => {
       setSelectedNoteId, notes, generateChordNotes, startResizeGrid]);
 
   const toggleMode = useCallback((newMode) => setMode(newMode), [setMode]);
-  const clearAll   = useCallback(() => { clearNotes(); setSelectedNoteId(null); }, [clearNotes, setSelectedNoteId]);
+  const clearAll   = useCallback(() => { clearNotes; setSelectedNoteId(null); }, [clearNotes, setSelectedNoteId]);
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="bg-gray-900 text-white rounded-xl min-h-0">
       <TopBar
         selectedInstrument={channel}
+        selectedPattern={currentPatternID}
         mode={mode}
         toggleMode={toggleMode}
         clearAll={clearAll}

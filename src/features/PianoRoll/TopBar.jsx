@@ -88,6 +88,7 @@ const ColsSlider = React.memo(({ cols, onColsChange }) => {
 
 export const TopBar = ({
   selectedInstrument,
+  selectedPattern,
   mode,
   toggleMode,
   clearAll,
@@ -187,13 +188,13 @@ export const TopBar = ({
   ], [handleDrawMode, handlePaintMode, handleResizeMode, handleChordsMode, deleteSelectedNotes]);
 
   const isChordSelectorDisabled = mode !== "chords";
-  const currentChannel = useChannelStore(s => s.getCurrentChannelName());
+  //const currentChannel = useChannelStore(s => s.getCurrentChannelName());
 
   return (
     <div className="flex gap-2 mb-2 items-center ml-10">
       {/* Instrument Label */}
       <div>
-        {currentChannel ? currentChannel : "No Channel"}
+        {/*currentChannel ? currentChannel : "No Channel"*/} {selectedInstrument} - {selectedPattern}
       </div>
 
       {/* Close Button */}

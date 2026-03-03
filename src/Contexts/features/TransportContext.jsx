@@ -4,7 +4,6 @@ import { useChannels } from "./ChannelProvider";
 import { TRANSPORT_ACTIONS, initialState, transportReducer } from "../../reducers/transportReducer";
 import { usePlaylist } from "./PlaylistProvider";
 import { rowToNoteName } from "../../features/PianoRoll/utils/noteUtils";
-import { CELL_WIDTH} from "../../features/PianoRoll/PianoRoll";
 import { usePlaylistStore } from "../../stores/usePlaylistStore";
 
 const TransportContext = createContext();
@@ -269,6 +268,8 @@ export function TransportProvider({ children }) {
         offset,
         pWidth: widthOfPlaylist.current
       });
+
+      console.log(pWidth);
        
       }
     }, "16n");

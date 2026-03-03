@@ -103,7 +103,10 @@ const PlaylistCell = memo(
     );
 
     const onDoubleClick = useCallback(() => {
-      if (cellPatternId) openPatternInEditor(cellPatternId);
+      if (cellPatternId) {
+        e.stopPropagation();
+        openPatternInEditor(cellPatternId);
+      }
     }, [cellPatternId, openPatternInEditor]);
 
     return (
@@ -343,12 +346,17 @@ const Playlist = memo(() => {
           </div>
         </div>
 
+        
+
         <div className="flex gap-2 flex-row overflow-auto">
           <span className="text-gray-400 text-xs">Patterns:</span>
           {patterns.map((p) => (
             <button
               key={p.id}
-              onClick={() => setSelectedPatternId(p.id)}
+              onClick={() => {
+                console.trace("onClick pattern button", p.id);
+                setSelectedPatternId(p.id);
+              }}
               onDoubleClick={() => openPatternInEditor(p.id)}
               className={`px-3 py-1 rounded text-xs transition-all ${
                 selectedPatternId === p.id

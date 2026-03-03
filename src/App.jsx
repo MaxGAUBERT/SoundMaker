@@ -1,4 +1,3 @@
-// App.jsx ou main.jsx
 import { useState, useRef, useCallback } from 'react';
 import ChannelRack from './features/ChannelRack';
 import Playlist from './features/Playlist';

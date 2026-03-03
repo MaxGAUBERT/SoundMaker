@@ -5,7 +5,7 @@ import { useGlobalColorContext } from "../Contexts/UI/GlobalColorContext";
 import { IoAddCircle, IoAddOutline } from "react-icons/io5";
 import { MdDelete } from "react-icons/md";
 import { BsBarChartSteps } from "react-icons/bs";
-import { FaFill } from "react-icons/fa";
+import { FaClone, FaFill } from "react-icons/fa";
 
 const Cell = memo(({ value, index, currentStep, isPlaying, onToggle, onFill, onClear }) => {
   const state = useTransport();
@@ -100,10 +100,11 @@ const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
       ) : (
         <span
           onDoubleClick={startRename}
-          onClick={() => 
+          onClick={(e) => {
+            e.stopPropagation();
             setCurrentChannelID(ch.id)
-          }
-
+          }}
+          onMouseUp={(e) => e.stopPropagation()}
           style={{ color: colorsComponent.Text, backgroundColor: colorsComponent.background }}
           className="w-24 text-sm sticky left-0 z-10 flex items-center px-2 cursor-pointer hover:bg-gray-700 rounded transition-colors"
           title="Double-click to rename"
@@ -179,6 +180,8 @@ export default function ChannelRack() {
   const renameChannel        = useChannelStore(s => s.renameChannel);
   const handleAddChannel     = useChannelStore(s => s.handleAddChannel);
   const handleAddPattern     = useChannelStore(s => s.handleAddPattern);
+  const handleClonePattern = useChannelStore(s => s.handleClonePattern);
+  const handleDeletePattern = useChannelStore(s => s.deletePattern);
   const loadSample           = useChannelStore(s => s.loadSample);
   const resetSamples         = useChannelStore(s => s.resetSamples);
   const moveChannel          = useChannelStore(s => s.moveChannel);
@@ -203,7 +206,10 @@ export default function ChannelRack() {
 
           <select
             value={currentPatternID}
-            onChange={e => setCurrentPatternID(Number(e.target.value))}
+            onChange={e => {
+              setCurrentPatternID(Number(e.target.value));
+            }}
+            onMouseUp={e => e.stopPropagation()} 
             style={{ backgroundColor: colorsComponent.background, color: colorsComponent.Text }}
             className="px-3 py-1 rounded text-sm focus:outline-none focus:ring-2 focus:bg-gray-800 focus:ring-blue-500"
           >
@@ -213,6 +219,15 @@ export default function ChannelRack() {
           <button onClick={handleAddPattern} className="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm transition-colors">
             <IoAddOutline title="Add patterns" />
           </button>
+
+          <button onClick={handleClonePattern} title="Clone pattern" className="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm transition-colors">
+            <FaClone />
+          </button>
+
+          <button onClick={handleDeletePattern} title="Delete pattern" className="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm transition-colors">
+            <MdDelete />
+          </button>
+
         </div>
 
         <div className="flex items-center gap-3">

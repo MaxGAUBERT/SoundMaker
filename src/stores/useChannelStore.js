@@ -46,12 +46,12 @@ export const useChannelStore = create((set, get) => ({
     _applySnapshot: (snapshot) => set(snapshot),
 
     _mutate: (next) => {
-        const { _commit } = get();
-        if (_commit) {
-            _commit('channel', next); 
-        } else {
-           set(next);      
-        }
+    const { _commit } = get();
+    if (_commit) {
+        _commit('channel', next);
+    } else {
+        set(state => ({ ...state, ...next })); 
+    }
     },
 
     // ── Sélecteur dérivé ──────────────────────────────────────────────────
@@ -79,7 +79,10 @@ export const useChannelStore = create((set, get) => ({
     },
 
     // ── Actions non-undoables (navigation) ───────────────────────────────
-    setCurrentPatternID: (id) => set({ currentPatternID: id }),
+    setCurrentPatternID: (id) => {
+    console.trace("setCurrentPatternID appelé avec", id);
+    set({ currentPatternID: id });
+    },
     
     setCurrentChannelID: (id) => {
       console.log("Setting channel to:", id);
@@ -185,8 +188,21 @@ export const useChannelStore = create((set, get) => ({
         const newId = state.patterns.length + 1;
         const clone = state.patterns[0].ch.map(ch => ({
         ...ch,
-        grid: [...ch.grid],
+        grid: createGrid(state.width),
         pianoData: []
+        }));
+        get()._mutate({
+            patterns: [...state.patterns, { id: newId, name: `P${newId}`, ch: clone, steps: state.width, pianoData: [] }],
+        });
+    },
+
+    handleClonePattern: () => {
+        const state = get();
+        const newId = state.patterns.length + 1;
+        const clone = state.patterns[0].ch.map(ch => ({
+        ...ch,
+        grid: [...ch.grid],
+        pianoData: [...ch.pianoData]
         }));
         get()._mutate({
             patterns: [...state.patterns, { id: newId, name: `P${newId}`, ch: clone, steps: state.width, pianoData: [] }],
@@ -282,7 +298,7 @@ export const useChannelStore = create((set, get) => ({
             currentPatternID, width,
             patterns: patterns.map(p => ({
                 id: p.id, name: p.name,
-                channels: p.ch.map(ch => ({ id: ch.id, name: ch.name, grid: [...ch.grid], sampleUrl: ch.sampleUrl, pianoData: [] })),
+                channels: p.ch.map(ch => ({ id: ch.id, name: ch.name, grid: [...ch.grid], sampleUrl: ch.sampleUrl, pianoData: ch.pianoData })),
             })),
         };
     },
@@ -295,7 +311,7 @@ export const useChannelStore = create((set, get) => ({
             patterns: data.patterns.map(p => ({
                 id: p.id, name: p.name,
                 steps: p.channels?.[0]?.grid?.length ?? DEFAULT_WIDTH,
-                ch: p.channels.map(ch => ({ id: ch.id, name: ch.name, grid: [...ch.grid], sampleUrl: ch.sampleUrl ?? null, pianoData: [] })),
+                ch: p.channels.map(ch => ({ id: ch.id, name: ch.name, grid: [...ch.grid], sampleUrl: ch.sampleUrl ?? null, pianoData: ch.pianoData })),
             })),
         });
     },

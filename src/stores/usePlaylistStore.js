@@ -32,16 +32,15 @@ export const usePlaylistStore = create((set, get) => ({
     _setCommit: (fn) => set({ _commit: fn }),
 
 
-    _applySnapshot: (snapshot) => set(snapshot),
-
+    _applySnapshot: (snapshot) => set(state => ({ ...state, ...snapshot })),
  
     _mutate: (next) => {
-        const { _commit } = get();
-        if (_commit) {
-            _commit('playlist', next);
-        } else {
-            set(next);
-        }
+    const { _commit } = get();
+    if (_commit) {
+        _commit('playlist', next);
+    } else {
+        set(state => ({ ...state, ...next })); 
+    }
     },
     // gestion de la sélection 
     startSelection: null,
