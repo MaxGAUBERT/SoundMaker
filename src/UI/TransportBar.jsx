@@ -60,13 +60,13 @@ export default function TransportBar(){
                 <input
                     type="number"
                     value={bpm}
-                    min={5}
+                    min={1}
                     max={300}
                     step={1}
                     onChange={(e) => {
                         let v = Number(e.target.value);
                         if (Number.isNaN(v)) return;
-                        v = Math.max(5, Math.min(300, v));
+                        v = Math.max(1, Math.min(300, v));
                         setBpm(v);
                 }}
                     />
