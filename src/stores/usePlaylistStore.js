@@ -141,7 +141,7 @@ export const usePlaylistStore = create((set, get) => ({
 
     setState: (data) => {
         if (!data) return;
-        const pWidth  = data.pWidth  ?? DEFAULT_WIDTH;
+        const pWidth  = data.pWidth ?? DEFAULT_WIDTH;
         const pHeight = data.pHeight ?? DEFAULT_HEIGHT;
         set({
             pWidth, pHeight,

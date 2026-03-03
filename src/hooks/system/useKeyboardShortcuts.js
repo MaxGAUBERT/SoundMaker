@@ -6,7 +6,7 @@ import { useMenuActions } from '../../Contexts/system/MenuActionsContext';
 
 export function useKeyboardShortcuts() {
   const { undo, redo } = useUndoManagerContext();
-  const { play, pause, stop, toggleLoop, toggleMetronome } = useTransport();
+  const { play, pause, stop, toggleLoop, toggleMetronome, mode, setMode} = useTransport();
   const { actions } = useMenuActions();
 
   useEffect(() => {
@@ -27,6 +27,11 @@ export function useKeyboardShortcuts() {
       if (e.code === 'KeyS')  { e.preventDefault(); stop(); }
       if (e.code === 'KeyM')  { e.preventDefault(); toggleMetronome(); }
       if (e.code === 'KeyL')  { e.preventDefault(); toggleLoop(); }
+      // toggle mode
+      if (e.key === 't') {
+        e.preventDefault();
+        setMode(mode === "pattern" ? "song" : "pattern");
+      }
 
       if (e.altKey && e.key === 'n')                 { e.preventDefault(); actions["New Project"](); }
       if (e.altKey && e.key === 'l')                 { e.preventDefault(); actions["Load Project"](); }
@@ -38,5 +43,5 @@ export function useKeyboardShortcuts() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo, play, pause, stop, toggleLoop, toggleMetronome, actions]);
+  }, [undo, redo, play, pause, stop, toggleLoop, toggleMetronome, actions, setMode]);
 }

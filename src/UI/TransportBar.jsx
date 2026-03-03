@@ -26,6 +26,7 @@ export default function TransportBar(){
                 </button>
 
                 <button
+                title="Toggle mode"
                 onClick={() => setMode(mode === "pattern" ? "song" : "pattern")}
                 >
                 {mode === "pattern" ? <FaItunesNote title="pattern mode"/> : <BiSolidPlaylist title="song mode"/>}

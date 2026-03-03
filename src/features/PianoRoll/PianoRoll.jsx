@@ -414,7 +414,7 @@ const PianoRoll = () => {
         selectedPattern={currentPatternID}
         mode={mode}
         toggleMode={toggleMode}
-        clearAll={clearAll}
+        clearAll={clearNotes}
         selectedChordType={selectedChordType}
         setSelectedChordType={setSelectedChordType}
         width={width}

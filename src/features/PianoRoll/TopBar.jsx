@@ -6,7 +6,6 @@ import { IoMusicalNotesSharp } from "react-icons/io5";
 import { MdOutlineDeleteOutline } from "react-icons/md";
 import { IoClose } from "react-icons/io5";
 import { GrClear } from "react-icons/gr";
-import { useChannelStore } from "../../stores/useChannelStore";
 
 export const CHORD_TYPES = {
   major: [0, 4, 7],
@@ -115,7 +114,7 @@ export const TopBar = ({
    // 🎹 Ajout des raccourcis clavier
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.ctrlKey || e.metaKey || e.altKey) return; // ignore combinaisons
+      if (e.ctrlKey || e.metaKey || e.altKey) return; 
       switch (e.key.toLowerCase()) {
         case "d": // Draw
           handleDrawMode();

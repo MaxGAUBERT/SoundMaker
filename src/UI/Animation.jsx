@@ -10,7 +10,7 @@ const Animation = () => {
     return (
 
         <motion.div>
-            <TbWaveSquare size={20}/>
+            <TbWaveSquare size={80} color="green"/>
         </motion.div>
     )
 

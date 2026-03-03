@@ -21,7 +21,7 @@ function ScanLines() {
   );
 }
 
-// ── Splash Screen — fondu Digitone ────────────────────────────────────────────
+// ── Splash Screen ────────────────────────────────────────────
 function SplashScreen({ onStart }) {
   return (
     <motion.div
@@ -44,7 +44,6 @@ function SplashScreen({ onStart }) {
     >
       <ScanLines />
 
-      {/* Voile radial qui se lève — écran LCD qui chauffe */}
       <motion.div
         initial={{ opacity: 1 }}
         animate={{ opacity: 0 }}
@@ -105,7 +104,7 @@ function SplashScreen({ onStart }) {
         style={{
           position: 'absolute', bottom: 24, zIndex: 6,
           fontFamily: "'Courier New', monospace",
-          fontSize: '0.6rem',
+          fontSize: '1.2rem',
           color: "red",
           letterSpacing: '0.25em',
         }}
@@ -119,7 +118,7 @@ function SplashScreen({ onStart }) {
 // ── Désintégration gauche → droite ────────────────────────────────────────────
 function DisintegrationReveal({ children }) {
   const COLS      = 36;
-  const PARTICLES = 25;
+  const PARTICLES = 60;
   const [showParticles, setShowParticles] = useState(true);
   const [scope, animate] = useAnimate();
 
@@ -129,7 +128,7 @@ function DisintegrationReveal({ children }) {
         '.col',
         { opacity: [0, 1, 0], scaleY: [0.4, 1, 0.2], y: [20, 0, -30] },
         {
-          duration: 0.55,
+          duration: 0.8,
           delay: stagger(0.035, { from: 'first' }),
           ease: ['easeOut', 'easeIn'],
         }

@@ -64,6 +64,7 @@ export function usePianoRollNotes(currentPatternID,currentChannelID) {
 
   const clearNotes = useCallback(() => {
     setNotes([]);
+    console.log("notes cleared: ", setNotes)
   }, [setNotes]);
 
   const filterNotesInRange = useCallback((maxCols) => {
