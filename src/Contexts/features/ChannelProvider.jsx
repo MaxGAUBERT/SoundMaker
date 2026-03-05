@@ -1,10 +1,10 @@
 // Contexts/features/ChannelProvider.jsx
 import { createContext, useContext } from 'react';
-import { useChannelStore } from '../../stores/useChannelStore';
+import { buildInitialState, useChannelStore } from '../../stores/useChannelStore';
 
 const ChannelContext = createContext();
 
-export { buildInitialChannelState } from '../../stores/useChannelStore';
+export { makeInitialChannels} from '../../stores/useChannelStore';
 
 export function ChannelProvider({ children }) {
     const store = useChannelStore();
@@ -14,6 +14,8 @@ export function ChannelProvider({ children }) {
         patterns:         store.patterns,
         currentPatternID: store.currentPatternID,
         currentPattern:   store.getCurrentPattern(),
+        playlist:         store.playlist,
+
 
         setWidth:           store.setWidth,
         setCurrentPatternID:store.setCurrentPatternID,
@@ -29,7 +31,9 @@ export function ChannelProvider({ children }) {
         resetSamples:       store.resetSamples,
         getChannelStates:   store.getChannelStates,
         setState:           store.setState,
+        getState:           store.getState,
         reset:              store.reset,
+        buildInitialState: store.buildInitialState,
         createGrid:         (w = store.width) => Array(w).fill(false),
     };
 

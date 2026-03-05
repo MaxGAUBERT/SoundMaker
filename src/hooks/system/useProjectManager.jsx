@@ -1,12 +1,10 @@
 import { useChannels } from "../../Contexts/features/ChannelProvider";
-import { usePlaylist } from "../../Contexts/features/PlaylistProvider";
 import { useTransport } from "../../Contexts/features/TransportContext";
 import { useStorage } from "../../Contexts/system/StorageContext";
 
 export default function useProjectManager() {
 
   const channels  = useChannels();
-  const playlist  = usePlaylist();
   const transport = useTransport();
   const storage   = useStorage();
 
@@ -14,8 +12,7 @@ export default function useProjectManager() {
   const collect = () => ({
     meta: { version: 1 },
 
-    channels:  channels.getChannelStates(), 
-    playlist:  playlist.getState(),
+    channels:  channels.getState(),
     transport: transport.getState()
   });
 
@@ -50,7 +47,6 @@ export default function useProjectManager() {
     if (!data) return;
 
     channels.setState(data.channels);
-    playlist.setState(data.playlist);
     transport.setState(data.transport);
 
     storage.setCurrentProjectId(id);
@@ -58,7 +54,6 @@ export default function useProjectManager() {
 
   const newProject = () => {
     channels.reset();
-    playlist.reset();
     transport.reset();
 
     storage.setCurrentProjectId(null);

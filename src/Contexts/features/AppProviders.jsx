@@ -5,7 +5,6 @@ import { MenuActionsProvider } from '../system/MenuActionsContext';
 import GlobalColorContextProvider from '../UI/GlobalColorContext';
 import { useKeyboardShortcuts } from '../../hooks/system/useKeyboardShortcuts';
 import { StorageProvider } from '../system/StorageContext';
-import { PlaylistProvider } from './PlaylistProvider';
 import { UndoManagerProvider } from '../system/UndoManagerContext';
 import { UndoManagerBridge } from '../system/UndoManagerBridge';
 import { HistoryProvider } from '../system/HistoryProvider';
@@ -24,7 +23,6 @@ export default function AppProviders({ children }) {
         <UndoManagerProvider>
           <UndoManagerBridge />
           <ChannelProvider>
-            <PlaylistProvider>
               <TransportProvider>
                 <MenuActionsProvider>
                   <KeyboardShortcutsWrapper>
@@ -32,7 +30,6 @@ export default function AppProviders({ children }) {
                   </KeyboardShortcutsWrapper>
                 </MenuActionsProvider>
               </TransportProvider>
-            </PlaylistProvider>
           </ChannelProvider>
           <UndoManagerBridge />
         </UndoManagerProvider>

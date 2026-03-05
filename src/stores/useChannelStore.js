@@ -2,255 +2,182 @@
 import { create } from 'zustand';
 import { DRUM_SAMPLES, DEFAULT_CHANNELS } from '../hooks/Samples/useSamples';
 
-const DEFAULT_WIDTH = 16;
+export const PATTERN_WIDTH  = 16;
+export const PLAYLIST_COLS  = 8;
+export const PLAYLIST_ROWS  = 8;
 
+// ── Helpers ────────────────────────────────────────────────────────────────
 
-function createGrid(width = DEFAULT_WIDTH) {
+function createGrid(width = PATTERN_WIDTH) {
     return Array(width).fill(false);
 }
 
-export function buildInitialChannelState() {
-    const width = DEFAULT_WIDTH;
-    const initialChannels = [
-        { id: 0, name: 'Kick',  grid: createGrid(width), sampleUrl: DRUM_SAMPLES.kick, pianoData: []},
-        { id: 1, name: 'Snare', grid: createGrid(width), sampleUrl: DRUM_SAMPLES.snare, pianoData: []},
-        { id: 2, name: 'Hihat', grid: createGrid(width), sampleUrl: DRUM_SAMPLES.hihat, pianoData: []},
-        { id: 3, name: 'Clap',  grid: createGrid(width), sampleUrl: DRUM_SAMPLES.clap, pianoData: []},
+export function buildPlaylistTracks(cols, rows, prev = []) {
+    return Array.from({ length: rows }, (_, r) => ({
+        id:   r,
+        name: prev[r]?.name ?? `Track ${r + 1}`,
+        grid: Array.from({ length: cols }, (_, c) => prev[r]?.grid?.[c] ?? null),
+    }));
+}
+
+export function makeInitialChannels(width) {
+    return [
+        { id: 0, name: 'Kick',  grid: createGrid(width), sampleUrl: DRUM_SAMPLES.kick,  pianoData: [] },
+        { id: 1, name: 'Snare', grid: createGrid(width), sampleUrl: DRUM_SAMPLES.snare, pianoData: [] },
+        { id: 2, name: 'Hihat', grid: createGrid(width), sampleUrl: DRUM_SAMPLES.hihat, pianoData: [] },
+        { id: 3, name: 'Clap',  grid: createGrid(width), sampleUrl: DRUM_SAMPLES.clap,  pianoData: [] },
     ];
+}
+
+export function buildInitialState() {
+    const width    = PATTERN_WIDTH;
+    const channels = makeInitialChannels(width);
     return {
+        // ── Patterns ──────────────────────────────────────────────────────
         width,
-        currentPatternID: 1,
-        currentChannelID: 0,
+        currentPatternID:  1,
+        currentChannelID:  0,
         patterns: [
-            { id: 1, name: 'P1', ch: initialChannels.map(ch => ({
-            ...ch,
-            grid: [...ch.grid],
-            pianoData: []  
-            })), steps: width, },
-                        { id: 2, name: 'P2',  ch: initialChannels.map(ch => ({
-            ...ch,
-            grid: [...ch.grid],
-            pianoData: []  
-            })), steps: width, },
+            { id: 1, name: 'P1', steps: width, ch: channels.map(ch => ({ ...ch, grid: [...ch.grid], pianoData: [] })) },
+            { id: 2, name: 'P2', steps: width, ch: channels.map(ch => ({ ...ch, grid: [...ch.grid], pianoData: [] })) },
         ],
+
+        // ── Playlist (source de vérité audio) ─────────────────────────────
+        clips: [
+            { id: 1, patternId: 1, start: 0, track: 0, length: 1 },
+        ],
+
+        // ── Playlist UI ───────────────────────────────────────────────────
+        pCols:         PLAYLIST_COLS,
+        pRows:         PLAYLIST_ROWS,
+        playlistTracks: buildPlaylistTracks(PLAYLIST_COLS, PLAYLIST_ROWS),
+
+        // ── Sélection timeline ────────────────────────────────────────────
+        isSelecting:    false,
+        startSelection: null,
+        selectionEnd:   null,
+        selectedIds:    [],
+
+        // ── Pattern sélectionné dans la palette ───────────────────────────
+        selectedPatternId: null,
     };
 }
 
+// ── Store ──────────────────────────────────────────────────────────────────
+
 export const useChannelStore = create((set, get) => ({
-    // ── State métier ───────────────────────────────────────────────────────
-    ...buildInitialChannelState(),
+    ...buildInitialState(),
+
+    // ── Undo/redo bridge ──────────────────────────────────────────────────
     _commit: null,
     _setCommit: (fn) => set({ _commit: fn }),
-
-
     _applySnapshot: (snapshot) => set(snapshot),
-
     _mutate: (next) => {
-    const { _commit } = get();
-    if (_commit) {
-        _commit('channel', next);
-    } else {
-        set(state => ({ ...state, ...next })); 
-    }
+        const { _commit } = get();
+        _commit ? _commit('channel', next) : set(s => ({ ...s, ...next }));
     },
 
-    // ── Sélecteur dérivé ──────────────────────────────────────────────────
-    getCurrentPattern: () => {
-        const { patterns, currentPatternID } = get();
-        return patterns.find(p => p.id === currentPatternID);
-    },
+    // ── Sélecteurs dérivés ────────────────────────────────────────────────
+    getCurrentPattern:    () => get().patterns.find(p => p.id === get().currentPatternID),
+    getCurrentChannel:    () => get().getCurrentPattern()?.ch.find(c => c.id === get().currentChannelID),
+    getCurrentChannelUrl: () => get().getCurrentChannel()?.sampleUrl,
+    getCurrentChannelName:() => get().getCurrentChannel()?.name,
 
-    getCurrentChannelName: () => {
-        const { patterns, currentPatternID, currentChannelID } = get();
-        const pattern = patterns.find(p => p.id === currentPatternID);
-        return pattern?.ch.find(c => c.id === currentChannelID)?.name;
-    },
+    // ── Navigation (non-undoable) ─────────────────────────────────────────
+    setCurrentPatternID:  (id) => set({ currentPatternID: id }),
+    setCurrentChannelID:  (id) => set({ currentChannelID: id }),
+    setSelectedPatternId: (id) => set({ selectedPatternId: id }),
 
-    getCurrentChannel: () => {
-        const { patterns, currentPatternID, currentChannelID } = get();
-        const pattern = patterns.find(p => p.id === currentPatternID);
-        return pattern?.ch.find(c => c.id === currentChannelID);
-    },
-
-    getCurrentChannelUrl: () => {
-        const { patterns, currentPatternID, currentChannelID } = get();
-        const pattern = patterns.find(p => p.id === currentPatternID);
-        return pattern?.ch.find(c => c.id === currentChannelID)?.sampleUrl;
-    },
-
-    // ── Actions non-undoables (navigation) ───────────────────────────────
-    setCurrentPatternID: (id) => {
-    console.trace("setCurrentPatternID appelé avec", id);
-    set({ currentPatternID: id });
-    },
-    
-    setCurrentChannelID: (id) => {
-      console.log("Setting channel to:", id);
-      get()._mutate({ currentChannelID: id });
-    },
-
-    // ── Actions undoables ─────────────────────────────────────────────────
-
+    // ── Séquenceur ────────────────────────────────────────────────────────
     toggleCell: (patternId, channelId, cellIndex) => {
-        const state = get();
-
+        const { patterns } = get();
         get()._mutate({
             currentPatternID: patternId,
-            patterns: state.patterns.map(p =>
-                p.id !== patternId ? p : {
-                    ...p,
-                    ch: p.ch.map(ch =>
-                        ch.id !== channelId ? ch : {
-                            ...ch,
-                            grid: ch.grid.map((v, i) => i === cellIndex ? !v : v),
-                        }
-                    ),
-                }
-            ),
-        });
-    },
-
-    fillSteps: (patternId, channelId, startIndex, n, value = true) => {
-    const state = get();
-
-    get()._mutate({
-    patterns: state.patterns.map(p =>
-      p.id !== patternId
-        ? p
-        : {
-            ...p,
-            ch: p.ch.map(ch =>
-              ch.id !== channelId
-                ? ch
-                : {
+            patterns: patterns.map(p => p.id !== patternId ? p : {
+                ...p,
+                ch: p.ch.map(ch => ch.id !== channelId ? ch : {
                     ...ch,
-                    grid: ch.grid.map((cell, i) => {
-
-                      // ───── MODE CONTINU (ex: 16) ─────
-                      if (typeof n === "number") {
-                        const end = Math.min(startIndex + n, ch.grid.length);
-                        return (i >= startIndex && i < end)
-                          ? value
-                          : cell;
-                      }
-
-                      // ───── MODE FRACTION (ex: "1/4") ─────
-                      if (typeof n === "string") {
-                        const parts = n.split("/");
-                        const step = parseInt(parts[1], 10);
-
-                        if (!isNaN(step)) {
-                          return (i >= startIndex && (i - startIndex) % step === 0 )
-                            ? value
-                            : null;
-                        }
-
-                        return cell;
-                      }
-                    }),
-                  }
-            ),
-          }
-    ),
-  });
-    },
-
-    clearCell: (patternId, channelId, cellIndex) => {
-        const state = get();
-        get()._mutate({
-            patterns: state.patterns.map(p =>
-                p.id !== patternId ? p : {
-                    ...p,
-                    ch: p.ch.map(ch =>
-                        ch.id !== channelId ? ch : {
-                            ...ch,
-                            grid: ch.grid.map((v, i) => i === cellIndex ? false : v),
-                        }
-                    ),
-                }
-            ),
-        });
-    },
-
-    handleAddChannel: () => {
-        const state = get();
-        const newId = state.patterns[0].ch.length;
-        get()._mutate({
-            patterns: state.patterns.map(p => ({
-                ...p,
-                ch: [...p.ch, { id: newId, name: `Channel ${newId}`, grid: createGrid(state.width), sampleUrl: null, pianoData: [] }],
-            })),
-        });
-    },
-
-    handleAddPattern: () => {
-        const state = get();
-        const newId = state.patterns.length + 1;
-        const clone = state.patterns[0].ch.map(ch => ({
-        ...ch,
-        grid: createGrid(state.width),
-        pianoData: []
-        }));
-        get()._mutate({
-            patterns: [...state.patterns, { id: newId, name: `P${newId}`, ch: clone, steps: state.width, pianoData: [] }],
-        });
-    },
-
-    handleClonePattern: () => {
-        const state = get();
-        const newId = state.patterns.length + 1;
-        const clone = state.patterns[0].ch.map(ch => ({
-        ...ch,
-        grid: [...ch.grid],
-        pianoData: [...ch.pianoData]
-        }));
-        get()._mutate({
-            patterns: [...state.patterns, { id: newId, name: `P${newId}`, ch: clone, steps: state.width, pianoData: [] }],
-        });
-    },
-
-    renameChannel: (channelId, newName) => {
-        const state = get();
-        get()._mutate({
-            patterns: state.patterns.map(p => ({
-                ...p,
-                ch: p.ch.map(ch => ch.id === channelId ? { ...ch, name: newName.length > 8 ? ch.name : newName} : ch),
-            })),
-        });
-    },
-
-    deletePattern: (patternId) => {
-        const state = get();
-        get()._mutate({ patterns: state.patterns.filter(p => p.id !== patternId) });
-    },
-
-    deleteChannel: (channelId) => {
-        const state = get();
-        get()._mutate({
-            patterns: state.patterns.map(p => ({
-                ...p,
-                ch: p.ch.filter(ch => ch.id !== channelId),
-            })),
-        });
-    },
-
-    moveChannel: (fromIdx, toIdx) => {
-        const state = get();
-        get()._mutate({
-            patterns: state.patterns.map(p => {
-                const ch = [...p.ch];
-                const [moved] = ch.splice(fromIdx, 1);
-                ch.splice(toIdx, 0, moved);
-                return { ...p, ch };
+                    grid: ch.grid.map((v, i) => i === cellIndex ? !v : v),
+                }),
             }),
         });
     },
 
+    clearCell: (patternId, channelId, cellIndex) => {
+        const { patterns } = get();
+        get()._mutate({
+            patterns: patterns.map(p => p.id !== patternId ? p : {
+                ...p,
+                ch: p.ch.map(ch => ch.id !== channelId ? ch : {
+                    ...ch,
+                    grid: ch.grid.map((v, i) => i === cellIndex ? false : v),
+                }),
+            }),
+        });
+    },
+
+    fillSteps: (patternId, channelId, startIndex, n, value = true) => {
+        const { patterns } = get();
+        get()._mutate({
+            patterns: patterns.map(p => p.id !== patternId ? p : {
+                ...p,
+                ch: p.ch.map(ch => ch.id !== channelId ? ch : {
+                    ...ch,
+                    grid: ch.grid.map((cell, i) => {
+                        if (typeof n === 'number') {
+                            return (i >= startIndex && i < startIndex + n) ? value : cell;
+                        }
+                        if (typeof n === 'string') {
+                            const step = parseInt(n.split('/')[1], 10);
+                            return (!isNaN(step) && i >= startIndex && (i - startIndex) % step === 0) ? value : cell;
+                        }
+                        return cell;
+                    }),
+                }),
+            }),
+        });
+    },
+
+    // ── Patterns ──────────────────────────────────────────────────────────
+    handleAddPattern: () => {
+        const { patterns, width } = get();
+        const newId = patterns.length + 1;
+        const ch = makeInitialChannels(width).map(c => ({ ...c, grid: createGrid(width), pianoData: [] }));
+        get()._mutate({ patterns: [...patterns, { id: newId, name: `P${newId}`, steps: width, ch }] });
+    },
+
+    handleClonePattern: () => {
+        const { patterns } = get();
+        const newId = patterns.length + 1;
+        const src   = patterns[0];
+        const ch    = src.ch.map(c => ({ ...c, grid: [...c.grid], pianoData: [...c.pianoData] }));
+        get()._mutate({ patterns: [...patterns, { id: newId, name: `P${newId}`, steps: src.steps, ch }] });
+    },
+
+    deletePattern: (patternId) => {
+        get()._mutate({ patterns: get().patterns.filter(p => p.id !== patternId) });
+    },
+    
+    setPWidth: (newPWidth) => {
+        const { pRows, playlistTracks } = get();
+        get()._mutate({
+            pCols: newPWidth,
+            playlistTracks: buildPlaylistTracks(newPWidth, pRows, playlistTracks),
+        });
+    },
+
+    setPHeight: (newPHeight) => {
+        const { pCols, playlistTracks } = get();
+        get()._mutate({
+            pRows: newPHeight,
+            playlistTracks: buildPlaylistTracks(pCols, newPHeight, playlistTracks),
+        });
+    },
     setWidth: (newWidth) => {
-        const state = get();
+        const { patterns } = get();
         get()._mutate({
             width: newWidth,
-            patterns: state.patterns.map(p => ({
+            patterns: patterns.map(p => ({
                 ...p,
                 ch: p.ch.map(ch => {
                     const next = Array(newWidth).fill(false);
@@ -261,13 +188,50 @@ export const useChannelStore = create((set, get) => ({
         });
     },
 
+    // ── Channels ──────────────────────────────────────────────────────────
+    handleAddChannel: () => {
+        const { patterns, width } = get();
+        const newId = patterns[0].ch.length;
+        get()._mutate({
+            patterns: patterns.map(p => ({
+                ...p,
+                ch: [...p.ch, { id: newId, name: `Channel ${newId}`, grid: createGrid(width), sampleUrl: null, pianoData: [] }],
+            })),
+        });
+    },
+
+    deleteChannel: (channelId) => {
+        get()._mutate({
+            patterns: get().patterns.map(p => ({ ...p, ch: p.ch.filter(ch => ch.id !== channelId) })),
+        });
+    },
+
+    moveChannel: (fromIdx, toIdx) => {
+        get()._mutate({
+            patterns: get().patterns.map(p => {
+                const ch = [...p.ch];
+                ch.splice(toIdx, 0, ch.splice(fromIdx, 1)[0]);
+                return { ...p, ch };
+            }),
+        });
+    },
+
+    renameChannel: (channelId, newName) => {
+        if (newName.length > 8) return;
+        get()._mutate({
+            patterns: get().patterns.map(p => ({
+                ...p,
+                ch: p.ch.map(ch => ch.id === channelId ? { ...ch, name: newName } : ch),
+            })),
+        });
+    },
+
     loadSample: (e, channelId) => {
         const file = e.target.files[0];
         if (!file) return;
         const url = URL.createObjectURL(file);
-        const state = get();
         get()._mutate({
-            patterns: state.patterns.map(p => ({
+            patterns: get().patterns.map(p => ({
                 ...p,
                 ch: p.ch.map(ch => {
                     if (ch.id !== channelId) return ch;
@@ -279,9 +243,8 @@ export const useChannelStore = create((set, get) => ({
     },
 
     resetSamples: () => {
-        const state = get();
         get()._mutate({
-            patterns: state.patterns.map(p => ({
+            patterns: get().patterns.map(p => ({
                 ...p,
                 ch: p.ch.map(ch => {
                     const def = DEFAULT_CHANNELS.find(d => d.id === ch.id);
@@ -291,31 +254,123 @@ export const useChannelStore = create((set, get) => ({
         });
     },
 
+    // ── Playlist clips (source de vérité audio) ───────────────────────────
+    placeClip: (track, colIdx, patternId) => {
+        const { clips, playlistTracks } = get();
+        const id = patternId ?? get().selectedPatternId;
+        if (!id) return;
+
+        const alreadyExists = clips.some(c => c.start === colIdx && c.track === track);
+        const newClips = alreadyExists ? clips : [
+            ...clips,
+            { id: Date.now(), patternId: id, start: colIdx, track, length: 1 },
+        ];
+
+        get()._mutate({
+            clips: newClips,
+            playlistTracks: playlistTracks.map((t, r) => r !== track ? t : {
+                ...t,
+                grid: t.grid.map((v, c) => c === colIdx ? id : v),
+            }),
+        });
+    },
+
+    removeClip: (track, colIdx) => {
+        const { clips, playlistTracks } = get();
+        get()._mutate({
+            clips: clips.filter(c => !(c.start === colIdx && c.track === track)),
+            playlistTracks: playlistTracks.map((t, r) => r !== track ? t : {
+                ...t,
+                grid: t.grid.map((v, c) => c === colIdx ? null : v),
+            }),
+        });
+    },
+
+    resizeClip: (clipId, newLength) => {
+        get()._mutate({
+            clips: get().clips.map(c => c.id !== clipId ? c : { ...c, length: newLength }),
+        });
+    },
+
+    clearPlaylist: () => {
+        const { pCols, pRows } = get();
+        get()._mutate({
+            clips: [],
+            playlistTracks: buildPlaylistTracks(pCols, pRows),
+        });
+    },
+
+    // ── Playlist UI ───────────────────────────────────────────────────────
+    setPCols: (value) => {
+        const { pRows, playlistTracks } = get();
+        get()._mutate({ pCols: value, playlistTracks: buildPlaylistTracks(value, pRows, playlistTracks) });
+    },
+
+    setPRows: (value) => {
+        const { pCols, playlistTracks } = get();
+        get()._mutate({ pRows: value, playlistTracks: buildPlaylistTracks(pCols, value, playlistTracks) });
+    },
+
+    renameTrack: (trackId, newName) => {
+        get()._mutate({
+            playlistTracks: get().playlistTracks.map(t => t.id !== trackId ? t : { ...t, name: newName }),
+        });
+    },
+
+    // ── Sélection timeline ────────────────────────────────────────────────
+    setSelection: (start, end) => set({
+        isSelecting:    true,
+        startSelection: start,
+        selectionEnd:   end,
+        selectedIds:    Array.from({ length: end - start + 1 }, (_, i) => start + i),
+    }),
+    
+    clearSelection: () => set({
+        isSelecting:    false,
+        startSelection: null,
+        selectionEnd:   null,
+        selectedIds:    [],
+    }),
+
     // ── Import / Export ────────────────────────────────────────────────────
-    getChannelStates: () => {
-        const { patterns, currentPatternID, width } = get();
+    getState: () => {
+        const { width, currentPatternID, patterns, clips, pCols, pRows, playlistTracks, selectedPatternId } = get();
         return {
-            currentPatternID, width,
+            width, currentPatternID, selectedPatternId,
+            pCols, pRows,
             patterns: patterns.map(p => ({
                 id: p.id, name: p.name,
                 channels: p.ch.map(ch => ({ id: ch.id, name: ch.name, grid: [...ch.grid], sampleUrl: ch.sampleUrl, pianoData: ch.pianoData })),
             })),
+            clips: [...clips],
+            playlistTracks: playlistTracks.map(t => ({ ...t, grid: [...t.grid] })),
         };
     },
 
     setState: (data) => {
-        if (!data) return;
-        set({
-            width: data.width ?? DEFAULT_WIDTH,
-            currentPatternID: data.currentPatternID ?? 1,
-            patterns: data.patterns.map(p => ({
-                id: p.id, name: p.name,
-                steps: p.channels?.[0]?.grid?.length ?? DEFAULT_WIDTH,
-                ch: p.channels.map(ch => ({ id: ch.id, name: ch.name, grid: [...ch.grid], sampleUrl: ch.sampleUrl ?? null, pianoData: ch.pianoData })),
+    if (!data) return;
+    const pCols = data.pCols ?? PLAYLIST_COLS;
+    const pRows = data.pRows ?? PLAYLIST_ROWS;
+    set({
+        width:             data.width ?? PATTERN_WIDTH,
+        currentPatternID:  data.currentPatternID ?? 1,
+        selectedPatternId: data.selectedPatternId ?? null,
+        patterns: (data.patterns ?? []).map(p => ({
+            id: p.id, name: p.name,
+            steps: p.channels?.[0]?.grid?.length ?? PATTERN_WIDTH,
+            ch: p.channels.map(ch => ({
+                id: ch.id, name: ch.name,
+                grid: [...ch.grid],
+                sampleUrl: ch.sampleUrl ?? null,
+                pianoData: ch.pianoData ?? [],
             })),
-        });
+        })),
+        clips: data.clips ?? [],
+        pCols,
+        pRows,
+        playlistTracks: buildPlaylistTracks(pCols, pRows, data.playlistTracks ?? []),
+    });
     },
 
-    reset: () => set(buildInitialChannelState()),
-    
+    reset: () => set(buildInitialState()),
 }));

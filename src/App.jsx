@@ -177,7 +177,7 @@ function DisintegrationReveal({ children }) {
               }}
             >
               {Array.from({ length: PARTICLES }).map((_, p) => {
-                const size   = 2 + Math.random() * 4;
+                const size   = 2 + Math.random() * 8;
                 const bright = Math.random() > 0.65;
                 return (
                   <div

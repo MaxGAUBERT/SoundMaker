@@ -1,40 +1,28 @@
 import { useEffect } from 'react';
 import { useUndoManagerContext } from './UndoManagerContext';
 import { useChannelStore } from '../../stores/useChannelStore';
-import { usePlaylistStore } from '../../stores/usePlaylistStore';
 
 export function UndoManagerBridge() {
-    const { setChannelState, setPlaylistState, channelState, playlistState } =
-        useUndoManagerContext();
+    const { setChannelState, channelState } = useUndoManagerContext();
 
-    const setChannelCommit  = useChannelStore(s => s._setCommit);
-    const setPlaylistCommit = usePlaylistStore(s => s._setCommit);
-    const applyChannelSnap  = useChannelStore(s => s._applySnapshot);
-    const applyPlaylistSnap = usePlaylistStore(s => s._applySnapshot);
+    const setChannelCommit = useChannelStore(s => s._setCommit);
+    const applyChannelSnap = useChannelStore(s => s._applySnapshot);
 
     useEffect(() => {
         setChannelCommit((scope, next) => {
-            setChannelState(draft => Object.assign(draft, next));
+            setChannelState(draft => {
+                Object.keys(next).forEach(key => {
+                    draft[key] = next[key];
+                });
+            });
         });
 
-        setPlaylistCommit((scope, next) => {
-            setPlaylistState(draft => Object.assign(draft, next));
-        });
-
-        return () => {
-        
-            setChannelCommit(null);
-            setPlaylistCommit(null);
-        };
-    }, [setChannelState, setPlaylistState, setChannelCommit, setPlaylistCommit]);
-    
-    useEffect(() => {
-        applyChannelSnap(channelState);
-    }, [channelState]); 
+        return () => setChannelCommit(null);
+    }, [setChannelState, setChannelCommit]);
 
     useEffect(() => {
-        applyPlaylistSnap(playlistState);
-    }, [playlistState]); 
+        if (channelState) applyChannelSnap(channelState);
+    }, [channelState]);
 
-    return null; 
+    return null;
 }
