@@ -36,7 +36,7 @@ const Cell = memo(({ value, index, currentStep, isPlaying, onToggle, onFill, onC
 const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
   colorsComponent, canDelete, isDragging, dragOverIndex, dragIndexRef,
   toggleCell, fillSteps, clearCell, renameChannel, loadSample, deleteChannel, 
-  moveChannel, setDragOverIndex, setIsDragging, updateDuration
+  moveChannel, setDragOverIndex, setIsDragging, updateDuration, updateMute
 }) => {
   
   const [renamingChannelId, setRenamingChannelId] = useState(null);
@@ -119,10 +119,11 @@ const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
           {ch.name}
         </span>
       )}
-
+      
+      <input type="checkbox" title="toggle mute" checked={ch.muted} onChange={(e) => updateMute(currentPatternID, ch.id, e.target.checked)} />
       <input
         type="file" accept="audio/*" title="Load Sample"
-        onChange={(e) => loadSample(e, ch.id)}
+        onChange={(e) => loadSample(e, currentPatternID, ch.id)}
         style={{ color: colorsComponent.Text }}
         className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-1 file:text-xs file:bg-gray-700 file:text-white hover:file:bg-gray-600"
       />
@@ -207,6 +208,7 @@ export default function ChannelRack() {
   const deleteChannel        = useChannelStore(s => s.deleteChannel);
   const fillSteps           = useChannelStore(s => s.fillSteps);
   const updateDuration      = useChannelStore(s => s.updateDuration);
+  const updateMute          = useChannelStore(s => s.updateMute);
   const { colorsComponent } = useGlobalColorContext();
   const { isPlaying, currentStep } = useTransport();
 
@@ -286,6 +288,7 @@ export default function ChannelRack() {
                     setDragOverIndex={setDragOverIndex}
                     setIsDragging={setIsDragging}
                     updateDuration={updateDuration}
+                    updateMute={updateMute}
                   />
                 ))}
               </div>

@@ -96,7 +96,7 @@ export function TransportProvider({ children }) {
   function playChannels(ch_list, localStep, time) {
     ch_list.forEach(ch => {
       const sampler = samplersRef.current.get(ch.id);
-      if (!sampler?.loaded) return;
+      if (!sampler?.loaded || ch_list.muted) return;
 
       if (ch.pianoData?.length) {
         ch.pianoData
@@ -109,7 +109,7 @@ export function TransportProvider({ children }) {
         return;
       }
 
-      if (ch.grid?.[localStep]) {
+      if (ch.grid?.[localStep] && !ch.muted) {
         sampler.triggerAttackRelease("C5", ch.duration, time);
       }
     });
@@ -124,6 +124,7 @@ export function TransportProvider({ children }) {
       Tone.Transport.stop();
       Tone.Transport.cancel();
       Tone.Transport.position = 0;
+      Tone.Transport.clear();
       stepIndexRef.current = 0;
       dispatch({ type: TRANSPORT_ACTIONS.SET_CURRENT_STEP, payload: 0 });
     };
@@ -183,6 +184,7 @@ export function TransportProvider({ children }) {
             const localStep = (step - clipStart) % patternLength;
 
             console.log("🎵 Playing clip patternId:", patternId, "step:", step, "localStep:", (step - clipStart) % patternLength);
+            
             playChannels(pat.ch, localStep, time);
           });
 

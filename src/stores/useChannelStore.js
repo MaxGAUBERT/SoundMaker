@@ -23,10 +23,10 @@ export function buildPlaylistTracks(cols, rows, prev = []) {
 
 export function makeInitialChannels(width) {
     return [
-        { id: 0, name: 'Kick',  grid: createGrid(width), sampleUrl: DRUM_SAMPLES.kick,  pianoData: [], duration: "4n" },
-        { id: 1, name: 'Snare', grid: createGrid(width), sampleUrl: DRUM_SAMPLES.snare, pianoData: [], duration: "4n" },
-        { id: 2, name: 'Hihat', grid: createGrid(width), sampleUrl: DRUM_SAMPLES.hihat, pianoData: [], duration: "4n" },
-        { id: 3, name: 'Clap',  grid: createGrid(width), sampleUrl: DRUM_SAMPLES.clap,  pianoData: [], duration: "4n" },
+        { id: 0, name: 'Kick',  grid: createGrid(width), sampleUrl: DRUM_SAMPLES.kick,  pianoData: [], duration: "4n", muted: false },
+        { id: 1, name: 'Snare', grid: createGrid(width), sampleUrl: DRUM_SAMPLES.snare, pianoData: [], duration: "4n", muted: false },
+        { id: 2, name: 'Hihat', grid: createGrid(width), sampleUrl: DRUM_SAMPLES.hihat, pianoData: [], duration: "4n", muted: false },
+        { id: 3, name: 'Clap',  grid: createGrid(width), sampleUrl: DRUM_SAMPLES.clap,  pianoData: [], duration: "4n", muted: false },
     ];
 }
 
@@ -119,6 +119,21 @@ export const useChannelStore = create((set, get) => ({
             })
         })
         console.log(newValue);
+    },
+
+    updateMute: (patternId, channelId, muted) => {
+        const {patterns} = get();
+        get()._mutate({
+            patterns: patterns.map(p => p.id !== patternId ? p :{
+                ...p,
+                ch: p.ch.map(ch => ch.id !== channelId ?
+                    ch : {
+                        ...ch,
+                        muted
+                    }
+                )
+            })
+        })
     },
 
     clearCell: (patternId, channelId, cellIndex) => {
@@ -252,20 +267,20 @@ export const useChannelStore = create((set, get) => ({
         });
     },
 
-    loadSample: (e, channelId) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const url = URL.createObjectURL(file);
-        get()._mutate({
-            patterns: get().patterns.map(p => ({
-                ...p,
-                ch: p.ch.map(ch => {
-                    if (ch.id !== channelId) return ch;
-                    if (ch.sampleUrl?.startsWith('blob:')) URL.revokeObjectURL(ch.sampleUrl);
-                    return { ...ch, sampleUrl: url };
-                }),
-            })),
-        });
+    loadSample: (e, patternID, channelId) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    get()._mutate({
+        patterns: get().patterns.map(p => p.id !== patternID ? p : {
+            ...p,
+            ch: p.ch.map(ch => {
+                if (ch.id !== channelId) return ch;
+                if (ch.sampleUrl?.startsWith('blob:')) URL.revokeObjectURL(ch.sampleUrl);
+                return { ...ch, sampleUrl: url };
+            }),
+        }),
+    });
     },
 
     resetSamples: () => {
@@ -366,7 +381,7 @@ export const useChannelStore = create((set, get) => ({
             pCols, pRows,
             patterns: patterns.map(p => ({
                 id: p.id, name: p.name,
-                channels: p.ch.map(ch => ({ id: ch.id, name: ch.name, grid: [...ch.grid], sampleUrl: ch.sampleUrl, pianoData: ch.pianoData, duration: ch.duration })),
+                channels: p.ch.map(ch => ({ id: ch.id, name: ch.name, grid: [...ch.grid], sampleUrl: ch.sampleUrl, pianoData: ch.pianoData, duration: ch.duration, muted: ch.muted })),
             })),
             clips: [...clips],
             playlistTracks: playlistTracks.map(t => ({ ...t, grid: [...t.grid] })),
