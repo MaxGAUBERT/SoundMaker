@@ -155,9 +155,17 @@ export const useChannelStore = create((set, get) => ({
     },
 
     deletePattern: (patternId) => {
-        get()._mutate({ patterns: get().patterns.filter(p => p.id !== patternId) });
+    const {patterns, currentPatternID} = get();
+    const newPattern = patterns.filter(p => p.id !== patternId);
+    if (newPattern.length === 0) return;
+
+    const newId = currentPatternID === patternId ?
+        newPattern[newPattern.length - 1].id
+        : currentPatternID;
+        
+    get()._mutate({ patterns: newPattern, currentPatternID: newId });
     },
-    
+
     setPWidth: (newPWidth) => {
         const { pRows, playlistTracks } = get();
         get()._mutate({

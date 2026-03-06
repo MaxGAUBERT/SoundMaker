@@ -181,7 +181,7 @@ export default function ChannelRack() {
   const handleAddChannel     = useChannelStore(s => s.handleAddChannel);
   const handleAddPattern     = useChannelStore(s => s.handleAddPattern);
   const handleClonePattern = useChannelStore(s => s.handleClonePattern);
-  const handleDeletePattern = useChannelStore(s => s.deletePattern);
+  const deletePattern = useChannelStore(s => s.deletePattern);
   const loadSample           = useChannelStore(s => s.loadSample);
   const resetSamples         = useChannelStore(s => s.resetSamples);
   const moveChannel          = useChannelStore(s => s.moveChannel);
@@ -224,7 +224,7 @@ export default function ChannelRack() {
             <FaClone />
           </button>
 
-          <button onClick={handleDeletePattern} title="Delete pattern" className="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm transition-colors">
+          <button onClick={() => deletePattern(currentPatternID)} title="Delete pattern" className="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm transition-colors">
             <MdDelete />
           </button>
 
