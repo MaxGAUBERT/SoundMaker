@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { DRUM_SAMPLES, DEFAULT_CHANNELS } from '../hooks/Samples/useSamples';
 
+
 export const PATTERN_WIDTH  = 16;
 export const PLAYLIST_COLS  = 8;
 export const PLAYLIST_ROWS  = 8;
@@ -22,10 +23,10 @@ export function buildPlaylistTracks(cols, rows, prev = []) {
 
 export function makeInitialChannels(width) {
     return [
-        { id: 0, name: 'Kick',  grid: createGrid(width), sampleUrl: DRUM_SAMPLES.kick,  pianoData: [] },
-        { id: 1, name: 'Snare', grid: createGrid(width), sampleUrl: DRUM_SAMPLES.snare, pianoData: [] },
-        { id: 2, name: 'Hihat', grid: createGrid(width), sampleUrl: DRUM_SAMPLES.hihat, pianoData: [] },
-        { id: 3, name: 'Clap',  grid: createGrid(width), sampleUrl: DRUM_SAMPLES.clap,  pianoData: [] },
+        { id: 0, name: 'Kick',  grid: createGrid(width), sampleUrl: DRUM_SAMPLES.kick,  pianoData: [], duration: "4n" },
+        { id: 1, name: 'Snare', grid: createGrid(width), sampleUrl: DRUM_SAMPLES.snare, pianoData: [], duration: "4n" },
+        { id: 2, name: 'Hihat', grid: createGrid(width), sampleUrl: DRUM_SAMPLES.hihat, pianoData: [], duration: "4n" },
+        { id: 3, name: 'Clap',  grid: createGrid(width), sampleUrl: DRUM_SAMPLES.clap,  pianoData: [], duration: "4n" },
     ];
 }
 
@@ -82,6 +83,7 @@ export const useChannelStore = create((set, get) => ({
     getCurrentChannel:    () => get().getCurrentPattern()?.ch.find(c => c.id === get().currentChannelID),
     getCurrentChannelUrl: () => get().getCurrentChannel()?.sampleUrl,
     getCurrentChannelName:() => get().getCurrentChannel()?.name,
+    getDuration: () => get().getCurrentChannel()?.duration,
 
     // ── Navigation (non-undoable) ─────────────────────────────────────────
     setCurrentPatternID:  (id) => set({ currentPatternID: id }),
@@ -101,6 +103,22 @@ export const useChannelStore = create((set, get) => ({
                 }),
             }),
         });
+    },
+
+    updateDuration: (patternId, channelId, newValue) => {
+        const {patterns} = get();
+        get()._mutate({
+            patterns: patterns.map(p => p.id !== patternId ? p :{
+                ...p,
+                ch: p.ch.map(ch => ch.id !== channelId ?
+                    ch : {
+                        ...ch,
+                        duration: newValue
+                    }
+                )
+            })
+        })
+        console.log(newValue);
     },
 
     clearCell: (patternId, channelId, cellIndex) => {
@@ -348,7 +366,7 @@ export const useChannelStore = create((set, get) => ({
             pCols, pRows,
             patterns: patterns.map(p => ({
                 id: p.id, name: p.name,
-                channels: p.ch.map(ch => ({ id: ch.id, name: ch.name, grid: [...ch.grid], sampleUrl: ch.sampleUrl, pianoData: ch.pianoData })),
+                channels: p.ch.map(ch => ({ id: ch.id, name: ch.name, grid: [...ch.grid], sampleUrl: ch.sampleUrl, pianoData: ch.pianoData, duration: ch.duration })),
             })),
             clips: [...clips],
             playlistTracks: playlistTracks.map(t => ({ ...t, grid: [...t.grid] })),
@@ -371,6 +389,7 @@ export const useChannelStore = create((set, get) => ({
                 grid: [...ch.grid],
                 sampleUrl: ch.sampleUrl ?? null,
                 pianoData: ch.pianoData ?? [],
+                duration: ch.duration
             })),
         })),
         clips: data.clips ?? [],

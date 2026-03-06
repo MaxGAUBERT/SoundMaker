@@ -7,6 +7,7 @@ import { MdDelete } from "react-icons/md";
 import { BsBarChartSteps } from "react-icons/bs";
 import { FaClone, FaFill } from "react-icons/fa";
 
+
 const Cell = memo(({ value, index, currentStep, isPlaying, onToggle, onFill, onClear }) => {
   const state = useTransport();
   
@@ -35,14 +36,13 @@ const Cell = memo(({ value, index, currentStep, isPlaying, onToggle, onFill, onC
 const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
   colorsComponent, canDelete, isDragging, dragOverIndex, dragIndexRef,
   toggleCell, fillSteps, clearCell, renameChannel, loadSample, deleteChannel, 
-  moveChannel, setDragOverIndex, setIsDragging
+  moveChannel, setDragOverIndex, setIsDragging, updateDuration
 }) => {
   
   const [renamingChannelId, setRenamingChannelId] = useState(null);
   const [newName, setNewName] = useState("");
   const [fillValue, setFillValue] = useState(4);
   const setCurrentChannelID = useChannelStore(s => s.setCurrentChannelID);
-
 
   function startRename() { setRenamingChannelId(ch.id); setNewName(ch.name); }
 
@@ -70,6 +70,13 @@ const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
     setDragOverIndex(null);
     setIsDragging(false);
   }
+
+  const duration = useChannelStore(s =>
+    s.patterns
+     .find(p => p.id === currentPatternID)
+     ?.ch.find(c => c.id === ch.id)
+     ?.duration ?? "4n"
+  );
 
 
   return (
@@ -119,6 +126,18 @@ const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
         style={{ color: colorsComponent.Text }}
         className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-1 file:text-xs file:bg-gray-700 file:text-white hover:file:bg-gray-600"
       />
+
+      <select
+        value={duration}
+        onChange={(e) => {
+          const v = e.target.value;
+          updateDuration(currentPatternID, ch.id, v);
+        }}
+      >
+        {["1m", "1n", "2n", "4n", "8n", "16n", "32n"].map(n =>
+          <option className="hover:bg-gray-500 bg-gray-800" key={n} value={n}>{n}</option>
+        )}
+      </select>
 
       <select
         value={fillValue}
@@ -187,7 +206,7 @@ export default function ChannelRack() {
   const moveChannel          = useChannelStore(s => s.moveChannel);
   const deleteChannel        = useChannelStore(s => s.deleteChannel);
   const fillSteps           = useChannelStore(s => s.fillSteps);
-
+  const updateDuration      = useChannelStore(s => s.updateDuration);
   const { colorsComponent } = useGlobalColorContext();
   const { isPlaying, currentStep } = useTransport();
 
@@ -216,15 +235,15 @@ export default function ChannelRack() {
             {patterns.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
 
-          <button onClick={handleAddPattern} className="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm transition-colors">
+          <button onClick={handleAddPattern} style={{color: colorsComponent.Button}} className="hover:bg-gray-700 px-3 py-1 rounded text-sm transition-colors">
             <IoAddOutline title="Add patterns" />
           </button>
 
-          <button onClick={handleClonePattern} title="Clone pattern" className="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm transition-colors">
+          <button onClick={handleClonePattern} title="Clone pattern" style={{color: colorsComponent.Button}} className=" hover:bg-gray-700 px-3 py-1 rounded text-sm transition-colors">
             <FaClone />
           </button>
 
-          <button onClick={() => deletePattern(currentPatternID)} title="Delete pattern" className="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm transition-colors">
+          <button onClick={() => deletePattern(currentPatternID)} title="Delete pattern" style={{color: colorsComponent.Button}} className=" hover:bg-gray-700 px-3 py-1 rounded text-sm transition-colors">
             <MdDelete />
           </button>
 
@@ -266,6 +285,7 @@ export default function ChannelRack() {
                     moveChannel={moveChannel}
                     setDragOverIndex={setDragOverIndex}
                     setIsDragging={setIsDragging}
+                    updateDuration={updateDuration}
                   />
                 ))}
               </div>

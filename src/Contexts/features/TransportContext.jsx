@@ -92,12 +92,6 @@ export function TransportProvider({ children }) {
     };
   }, []);
 
-  // ── Map patterns (évite les lookups répétés dans la loop) ─────────────────
-  const patternsMap = useMemo(
-    () => new Map(patterns.map(p => [p.id, p])),
-    [patterns]
-  );
-
   // ── Helpers lecture ───────────────────────────────────────────────────────
   function playChannels(ch_list, localStep, time) {
     ch_list.forEach(ch => {
@@ -109,14 +103,14 @@ export function TransportProvider({ children }) {
           .filter(n => n.start === localStep)
           .forEach(n => {
             const note = rowToNoteName(n.row);
-            const dur  = Tone.Time("16n").toSeconds() * n.length;
+            const dur  = Tone.Time(ch.duration).toSeconds() * n.length;
             sampler.triggerAttackRelease(note, dur, time);
           });
         return;
       }
 
       if (ch.grid?.[localStep]) {
-        sampler.triggerAttackRelease("C5", "16n", time);
+        sampler.triggerAttackRelease("C5", ch.duration, time);
       }
     });
   }
@@ -154,7 +148,7 @@ export function TransportProvider({ children }) {
         // ── Pattern mode ────────────────────────────────────────────────
         if (mode === "pattern") {
           const localStep = step % w;
-          const pat       = patternsMap.get(curPatId);
+          const pat       = patternsRef.current.find(p => p.id === curPatId);
 
           if (pat) playChannels(pat.ch, localStep, time);
 
@@ -184,7 +178,7 @@ export function TransportProvider({ children }) {
               return;
             }
 
-            const pat = patternsMap.get(patternId);
+            const pat = patternsRef.current.find(p => p.id === curPatId);
             if (!pat) return;
             const localStep = (step - clipStart) % patternLength;
 

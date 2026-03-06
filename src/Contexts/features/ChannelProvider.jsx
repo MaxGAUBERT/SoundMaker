@@ -1,6 +1,7 @@
 // Contexts/features/ChannelProvider.jsx
 import { createContext, useContext } from 'react';
 import { buildInitialState, useChannelStore } from '../../stores/useChannelStore';
+import { duration } from '@mui/material';
 
 const ChannelContext = createContext();
 
@@ -15,6 +16,7 @@ export function ChannelProvider({ children }) {
         currentPatternID: store.currentPatternID,
         currentPattern:   store.getCurrentPattern(),
         playlist:         store.playlist,
+        getDuration:      store.getDuration(),
 
 
         setWidth:           store.setWidth,
