@@ -187,6 +187,26 @@ export const useChannelStore = create((set, get) => ({
         get()._mutate({ patterns: [...patterns, { id: newId, name: `P${newId}`, steps: src.steps, ch }] });
     },
 
+    placeClip: (track, colIdx, patternId) => {
+        const { clips, playlistTracks } = get();
+        const id = patternId ?? get().selectedPatternId;
+        if (!id) return;
+
+        const alreadyExists = clips.some(c => c.start === colIdx && c.track === track);
+        const newClips = alreadyExists ? clips : [
+            ...clips,
+            { id: Date.now(), patternId: id, start: colIdx, track, length: 1 },
+        ];
+
+        get()._mutate({
+            clips: newClips,
+            playlistTracks: playlistTracks.map((t, r) => r !== track ? t : {
+                ...t,
+                grid: t.grid.map((v, c) => c === colIdx ? id : v),
+            }),
+        });
+    },
+
     deletePattern: (patternId) => {
     const {patterns, currentPatternID} = get();
     const newPattern = patterns.filter(p => p.id !== patternId);
@@ -295,25 +315,26 @@ export const useChannelStore = create((set, get) => ({
         });
     },
 
-    // ── Playlist clips (source de vérité audio) ───────────────────────────
-    placeClip: (track, colIdx, patternId) => {
-        const { clips, playlistTracks } = get();
-        const id = patternId ?? get().selectedPatternId;
-        if (!id) return;
+   resizeClip: (clipId, newLength) => {
+    const { clips, playlistTracks } = get();
+    const clip = clips.find(c => c.id === clipId);
+    if (!clip) return;
 
-        const alreadyExists = clips.some(c => c.start === colIdx && c.track === track);
-        const newClips = alreadyExists ? clips : [
-            ...clips,
-            { id: Date.now(), patternId: id, start: colIdx, track, length: 1 },
-        ];
+    const newClips = clips.map(c => c.id !== clipId ? c : { ...c, length: newLength });
 
-        get()._mutate({
-            clips: newClips,
-            playlistTracks: playlistTracks.map((t, r) => r !== track ? t : {
-                ...t,
-                grid: t.grid.map((v, c) => c === colIdx ? id : v),
-            }),
-        });
+    const newTracks = playlistTracks.map((t, r) => r !== clip.track ? t : {
+        ...t,
+        grid: t.grid.map((v, c) => {
+            const wasInClip = c >= clip.start && c < clip.start + clip.length;
+
+            const isInNewClip = c >= clip.start && c < clip.start + newLength;
+            if (isInNewClip) return clip.patternId;
+            if (wasInClip) return null;
+            return v;
+        }),
+    });
+
+    get()._mutate({ clips: newClips, playlistTracks: newTracks });
     },
 
     removeClip: (track, colIdx) => {
@@ -324,12 +345,6 @@ export const useChannelStore = create((set, get) => ({
                 ...t,
                 grid: t.grid.map((v, c) => c === colIdx ? null : v),
             }),
-        });
-    },
-
-    resizeClip: (clipId, newLength) => {
-        get()._mutate({
-            clips: get().clips.map(c => c.id !== clipId ? c : { ...c, length: newLength }),
         });
     },
 

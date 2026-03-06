@@ -96,7 +96,7 @@ export function TransportProvider({ children }) {
   function playChannels(ch_list, localStep, time) {
     ch_list.forEach(ch => {
       const sampler = samplersRef.current.get(ch.id);
-      if (!sampler?.loaded || ch_list.muted) return;
+      if (!sampler?.loaded) return;
 
       if (ch.pianoData?.length) {
         ch.pianoData
@@ -124,7 +124,6 @@ export function TransportProvider({ children }) {
       Tone.Transport.stop();
       Tone.Transport.cancel();
       Tone.Transport.position = 0;
-      Tone.Transport.clear();
       stepIndexRef.current = 0;
       dispatch({ type: TRANSPORT_ACTIONS.SET_CURRENT_STEP, payload: 0 });
     };
@@ -169,30 +168,24 @@ export function TransportProvider({ children }) {
           const patternLength = w;
   
           clips.forEach(clip => {
-            const { patternId, start, length } = clip;
-            const clipStart = start * patternLength;
-            const clipEnd   = clipStart + length * patternLength;
-            console.log("Start: ", clipStart, "end :", clipEnd);
+          const { patternId, start, length } = clip;
+          const clipStart = start * patternLength;
+          const clipEnd   = clipStart + length * patternLength;
 
-            if (step < clipStart || step >= clipEnd)  {
-              console.log("No clips to play");
-              return;
-            }
+          if (step < clipStart || step >= clipEnd) return;
 
-            const pat = patternsRef.current.find(p => p.id === curPatId);
-            if (!pat) return;
-            const localStep = (step - clipStart) % patternLength;
+          const pat = patternsRef.current.find(p => p.id === patternId); 
+          if (!pat) return;
 
-            console.log("🎵 Playing clip patternId:", patternId, "step:", step, "localStep:", (step - clipStart) % patternLength);
-            
-            playChannels(pat.ch, localStep, time);
-          });
+          const localStep = (step - clipStart) % patternLength;
+          playChannels(pat.ch, localStep, time);
+      });
 
           const n = step + 1;
           let nextStep;
 
           if (selecting && selStart !== null && selEnd !== null) {
-          // Boucle sélection uniquement
+  
           const startStep = selStart * patternLength;
           const endStep   = (selEnd + 1) * patternLength;
           nextStep = n >= endStep ? startStep : n;

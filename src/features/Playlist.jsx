@@ -163,9 +163,7 @@ const Playlist = memo(() => {
   const holdTimer       = useRef(null);
 
   const { colorsComponent } = useGlobalColorContext();
-  const { currentStep, isPlaying } = useTransport();
-
-  console.log("playlistTracks:", playlistTracks);
+  const { currentStep, isPlaying } = useTransport(); 
 
   const openPatternInEditor = useCallback(
     (patternId) => setCurrentPatternID(patternId),
