@@ -68,6 +68,13 @@ export function StorageProvider({ children }) {
       setCurrentProjectId(next[0]?.id ?? null);
   }
 
+  function deleteAllProject() {
+    if (savedProjects.length === 0) return;
+
+    setSavedProjects([]);
+    persist(savedProjects);
+  }
+
   const values = {
     savedProjects,
     currentProjectId,
@@ -76,6 +83,7 @@ export function StorageProvider({ children }) {
     saveProject,
     loadProject,
     deleteProject,
+    deleteAllProject
   };
 
   return (

@@ -1,7 +1,5 @@
-// components/PianoRoll/ZoomBarTW.jsx
 import React, { useCallback, useEffect, useRef } from "react";
 
-// ── Helper pur — signature sans déstructuration pour éviter le crash si undefined ──
 function clampRange(range, minWidth) {
   if (!Array.isArray(range) || range.length < 2) return [0, 100];
   const [a, b] = range;

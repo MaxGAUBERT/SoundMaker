@@ -12,11 +12,6 @@ const MENU = [
     label: "Edit",
     items: ["Undo", "Redo"],
   },
-  {
-    id: "Window",
-    label: "Window",
-    items: ["Drum Rack", "Note Editor", "FXChain", "Playlist"],
-  },
 ];
 
 const StripMenu = React.memo(() =>{

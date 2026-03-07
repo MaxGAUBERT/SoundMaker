@@ -4,7 +4,7 @@ import { useGlobalColorContext } from '../../Contexts/UI/GlobalColorContext';
 
 export default function LoadProjectModal({ onClose, onLoad}) {
   const [selectedProjectId, setSelectedProjectId] = useState(null);
-  const {savedProjects, deleteAllProject} = useStorage();
+  const {savedProjects, deleteAllProject, deleteProject} = useStorage();
   const {colorsComponent} = useGlobalColorContext();
 
   const handleLoadProject = (projectId) => {
@@ -19,11 +19,11 @@ export default function LoadProjectModal({ onClose, onLoad}) {
          <button 
             onClick={(e) => {
               e.stopPropagation();
-              deleteAllProject;
+              deleteAllProject();
             }}
             className="ml-4 bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors"
           >
-            Delete All Project
+            Delete All Projects
           </button>
         
         {savedProjects.length === 0 ? (
@@ -82,6 +82,16 @@ export default function LoadProjectModal({ onClose, onLoad}) {
                       className="ml-4 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors"
                     >
                       Load
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteProject(project.id);
+                      }}
+                      className="ml-4 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors"
+                    >
+                      Delete
                     </button>
                   </div>
                 </div>

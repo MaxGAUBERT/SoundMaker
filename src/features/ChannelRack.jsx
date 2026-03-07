@@ -104,6 +104,7 @@ const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
           style={{ color: colorsComponent.Text, backgroundColor: colorsComponent.background }}
           className="w-24 text-sm sticky left-0 z-10 px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        
       ) : (
         <span
           onDoubleClick={startRename}
@@ -119,14 +120,20 @@ const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
           {ch.name}
         </span>
       )}
-      
-      <input type="checkbox" title="toggle mute" checked={ch.muted} onChange={(e) => updateMute(currentPatternID, ch.id, e.target.checked)} />
+
       <input
         type="file" accept="audio/*" title="Load Sample"
         onChange={(e) => loadSample(e, currentPatternID, ch.id)}
         style={{ color: colorsComponent.Text }}
         className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-1 file:text-xs file:bg-gray-700 file:text-white hover:file:bg-gray-600"
       />
+
+      <div>
+         <input type="checkbox" title="toggle mute" checked={ch.muted} 
+       onChange={(e) => updateMute(currentPatternID, ch.id, e.target.checked)} 
+       />
+      <span className="text-[9px] leading-none mt-0.5"> {ch.muted ? "muted" : "unmuted"} </span>
+      </div>
 
       <select
         value={duration}
@@ -139,41 +146,53 @@ const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
           <option className="hover:bg-gray-500 bg-gray-800" key={n} value={n}>{n}</option>
         )}
       </select>
+  
+    
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-1">
+        <select
+          value={fillValue}
+          onChange={(e) => {
+            const v = e.target.value;
+            setFillValue(isNaN(Number(v)) ? v : Number(v));
+          }}
+          style={{ color: colorsComponent.Text, backgroundColor: colorsComponent.background }}
+          className="text-xs rounded px-1 py-0.5"
+        >
+          {[4, 8, 12, 16, 32, 64, "1/2", "1/4", "1/8"].map(n =>
+            <option className="hover:bg-gray-600 bg-gray-800" key={n} value={n}>{n}</option>
+          )}
+        </select>
 
-      <select
-        value={fillValue}
-        onChange={(e) => {
-          const v = e.target.value;
-          setFillValue(isNaN(v) ? v : Number(v));
-        }}
-      >
-        {[4,8,12,16,32,64,"1/2","1/4","1/8"].map(n =>
-          <option className="hover:bg-gray-600 bg-gray-800"  key={n} value={n}>{n}</option>
-        )}
-      </select>
+        <button
+          onClick={() => fillSteps(currentPatternID, ch.id, 0, fillValue, true)}
+          className="flex flex-col items-center text-gray-300 hover:text-white transition-colors"
+          title={`Fill every ${fillValue} steps`}
+        >
+          <FaFill className="text-sm" />
+          <span className="text-[9px] leading-none mt-0.5">Fill</span>
+        </button>
 
-      <button 
-        onClick={() =>
-            fillSteps(currentPatternID, ch.id, 0, fillValue, true)}  
-      >
-        <FaFill title="Fill steps"/>
-      </button>
+        <button
+          onClick={() => clearSteps(currentPatternID, ch.id)}
+          className="flex flex-col items-center text-gray-300 hover:text-white transition-colors"
+          title="Clear all steps"
+        >
+          <MdClearAll className="text-sm" />
+          <span className="text-[9px] leading-none mt-0.5">Clear</span>
+        </button>
 
-      <button
-        onClick={() => 
-            clearSteps(currentPatternID, ch.id)
-        }
-      >
-        <MdClearAll title="Clear steps" />
-      </button>
-
-      <button
-        disabled={!canDelete}
-        title={canDelete ? "Delete channel" : "Cannot delete (minimum 2 channels required)"}
-        onClick={() => deleteChannel(ch.id)}
-      >
-        <MdDelete style={{ color: colorsComponent.Text }} className="hover:text-red-500 transition-colors" />
-      </button>
+        <button
+          disabled={!canDelete}
+          title={canDelete ? "Delete channel" : "Minimum 2 channels required"}
+          onClick={() => deleteChannel(ch.id)}
+          className="flex flex-col items-center text-gray-300 hover:text-red-500 transition-colors disabled:opacity-30"
+        >
+          <MdDelete className="text-sm" />
+          <span className="text-[9px] leading-none mt-0.5">Del</span>
+        </button>
+      </div>
+    </div>
 
       {/* Cellules */}
       <div className="flex gap-1">
