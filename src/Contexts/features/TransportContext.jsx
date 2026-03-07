@@ -132,7 +132,6 @@ export function TransportProvider({ children }) {
 
     const start = async () => {
       await Tone.start();
-      //cleanup();
 
       loopRef.current = new Tone.Loop((time) => {
         const mode       = modeRef.current;
@@ -178,6 +177,7 @@ export function TransportProvider({ children }) {
           if (!pat) return;
 
           const localStep = (step - clipStart) % patternLength;
+          console.log(pat.ch);
           playChannels(pat.ch, localStep, time);
       });
 

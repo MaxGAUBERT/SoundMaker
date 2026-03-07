@@ -3,7 +3,7 @@ import { useChannelStore } from "../stores/useChannelStore";
 import { useTransport } from "../Contexts/features/TransportContext";
 import { useGlobalColorContext } from "../Contexts/UI/GlobalColorContext";
 import { IoAddCircle, IoAddOutline } from "react-icons/io5";
-import { MdDelete } from "react-icons/md";
+import { MdClearAll, MdDelete } from "react-icons/md";
 import { BsBarChartSteps } from "react-icons/bs";
 import { FaClone, FaFill } from "react-icons/fa";
 
@@ -36,7 +36,7 @@ const Cell = memo(({ value, index, currentStep, isPlaying, onToggle, onFill, onC
 const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
   colorsComponent, canDelete, isDragging, dragOverIndex, dragIndexRef,
   toggleCell, fillSteps, clearCell, renameChannel, loadSample, deleteChannel, 
-  moveChannel, setDragOverIndex, setIsDragging, updateDuration, updateMute
+  moveChannel, setDragOverIndex, setIsDragging, updateDuration, updateMute, clearSteps
 }) => {
   
   const [renamingChannelId, setRenamingChannelId] = useState(null);
@@ -160,6 +160,14 @@ const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
       </button>
 
       <button
+        onClick={() => 
+            clearSteps(currentPatternID, ch.id)
+        }
+      >
+        <MdClearAll title="Clear steps" />
+      </button>
+
+      <button
         disabled={!canDelete}
         title={canDelete ? "Delete channel" : "Cannot delete (minimum 2 channels required)"}
         onClick={() => deleteChannel(ch.id)}
@@ -177,7 +185,7 @@ const ChannelRow = memo(({ ch, index, currentPatternID, currentStep, isPlaying,
             currentStep={currentStep}
             isPlaying={isPlaying}
             onToggle={() => toggleCell(currentPatternID, ch.id, i)}
-            fillSteps={() => fillSteps(currentPatternID, ch.id, i)}
+            fillSteps={() => fillSteps(currentPatternID, ch.id, i, fillValue, true)}
             onClear={() => clearCell(currentPatternID, ch.id, i)}
           />
         ))}
@@ -209,6 +217,7 @@ export default function ChannelRack() {
   const fillSteps           = useChannelStore(s => s.fillSteps);
   const updateDuration      = useChannelStore(s => s.updateDuration);
   const updateMute          = useChannelStore(s => s.updateMute);
+  const clearSteps          = useChannelStore(s => s.clearSteps);
   const { colorsComponent } = useGlobalColorContext();
   const { isPlaying, currentStep } = useTransport();
 
@@ -289,6 +298,7 @@ export default function ChannelRack() {
                     setIsDragging={setIsDragging}
                     updateDuration={updateDuration}
                     updateMute={updateMute}
+                    clearSteps={clearSteps}
                   />
                 ))}
               </div>

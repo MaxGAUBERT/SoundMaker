@@ -1,21 +1,18 @@
-// store/usePianoRollStore.js
-// État UI du Piano Roll — mode, sélection, resize, zoom.
-// Séparé du store DrumRack car le Piano Roll a son propre cycle de vie.
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
 const initialState = {
-  mode:            "draw",   // draw | paint | resize | delete | chords
+  mode:            "draw", 
   selectedNoteId:  null,
   isMouseDown:     false,
   // Resize
   isResizing:      false,
-  resizeMode:      null,     // 'left' | 'right'
-  resizeDirection: null,     // pour le mode resize via grille
+  resizeMode:      null,     
+  resizeDirection: null,    
   initialMouseX:   0,
   initialNote:     null,
   // Zoom
-  windowRange:     [0, 100], // [startPercent, endPercent]
+  windowRange:     [0, 100],
   // Chord
   selectedChordType: "major",
 };
@@ -28,7 +25,7 @@ export const usePianoRollStore = create(
     setSelectedNoteId:    (id)    => set({ selectedNoteId: id }),
     setIsMouseDown:       (value) => set({ isMouseDown: value }),
     setWindowRange:       (range) => set(state => {
-      // Accepte aussi bien une valeur directe qu'un updater (prev => next)
+
       state.windowRange = typeof range === "function"
         ? range(state.windowRange)
         : range;

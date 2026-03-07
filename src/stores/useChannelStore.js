@@ -149,6 +149,20 @@ export const useChannelStore = create((set, get) => ({
         });
     },
 
+    clearSteps: (patternId, channelId) => {
+        const {patterns} = get();
+
+        get()._mutate({
+            patterns: patterns.map(p => p.id !== patternId ? p : {
+                ...p,
+                ch: p.ch.map(ch => ch.id !== channelId ? ch : {
+                    ...ch,
+                    grid: ch.grid.map((n, i) => i >= 0 && i < 16 ? false : n)
+                })
+            })
+        })
+    },
+
     fillSteps: (patternId, channelId, startIndex, n, value = true) => {
         const { patterns } = get();
         get()._mutate({
@@ -158,13 +172,13 @@ export const useChannelStore = create((set, get) => ({
                     ...ch,
                     grid: ch.grid.map((cell, i) => {
                         if (typeof n === 'number') {
-                            return (i >= startIndex && i < startIndex + n) ? value : cell;
+                            return (i >= startIndex && i < startIndex + n) ? value : null;
                         }
                         if (typeof n === 'string') {
                             const step = parseInt(n.split('/')[1], 10);
-                            return (!isNaN(step) && i >= startIndex && (i - startIndex) % step === 0) ? value : cell;
+                            return (!isNaN(step) && i >= startIndex && (i - startIndex) % step === 2) ? value : null;
                         }
-                        return cell;
+                        //return cell;
                     }),
                 }),
             }),
