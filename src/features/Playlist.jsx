@@ -14,7 +14,7 @@ const HEADER_PER_COL      = CELL_W / HEADER_CELL_W;
 // ── Playhead ──────────────────────────────────────────────────────────────────
 const Playhead = memo(({ step, patternLength, isPlaying }) => {
   if (!isPlaying) return null;
-  // step est en 16n, on le convertit en px
+
   const px = (step / patternLength) * CELL_W;
   return (
     <div
@@ -138,17 +138,17 @@ const TrackRow = memo(({
 const Playlist = memo(() => {
   const patterns          = useChannelStore(s => s.patterns);
   const setCurrentPatternID = useChannelStore(s => s.setCurrentPatternID);
-  const width             = useChannelStore(s => s.width); // patternLength en steps
-
-  // ⚠️ pCols = nb de colonnes (largeur), pRows = nb de tracks (hauteur)
+  const width             = useChannelStore(s => s.width); 
   const pCols             = useChannelStore(s => s.pCols);
   const pRows             = useChannelStore(s => s.pRows);
   const playlistTracks    = useChannelStore(s => s.playlistTracks);
+  const getTrackGrid = useChannelStore(s => s.getTrackGrid);
   const currentPatternID  = useChannelStore(s => s.currentPatternID);
   const selectedPatternId = useChannelStore(s => s.selectedPatternId);
+  const clips = useChannelStore(s => s.clips);
 
-  const setPWidth         = useChannelStore(s => s.setPCols);  // largeur → pCols
-  const setPHeight        = useChannelStore(s => s.setPRows);  // hauteur → pRows
+  const setPWidth         = useChannelStore(s => s.setPCols); 
+  const setPHeight        = useChannelStore(s => s.setPRows); 
   const setSelectedPatternId = useChannelStore(s => s.setSelectedPatternId);
   const placePatternRaw   = useChannelStore(s => s.placeClip);
   const clearCellRaw      = useChannelStore(s => s.removeClip);
@@ -169,6 +169,13 @@ const Playlist = memo(() => {
     (patternId) => setCurrentPatternID(patternId),
     [setCurrentPatternID]
   );
+
+  const tracksWithGrid = useMemo(() =>
+    playlistTracks.map(t => ({ ...t, grid: getTrackGrid(t.id) })),
+    [playlistTracks, getTrackGrid, clips] 
+  );
+
+  console.log("selected:", selectedPatternId, "current: ", currentPatternID)
 
   const placePattern = useCallback(
     (r, c) => placePatternRaw(r, c, selectedPatternId),
@@ -307,7 +314,7 @@ const Playlist = memo(() => {
         <div className="relative inline-block min-w-full">
           <Playhead step={currentStep} patternLength={width} isPlaying={isPlaying} />
           {headerRow}
-          {playlistTracks.map((track, rIdx) => (
+          {tracksWithGrid.map((track, rIdx) => (
             <TrackRow
               key={track.id}
               track={track}

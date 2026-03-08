@@ -265,8 +265,8 @@ export default function ChannelRack() {
             {patterns.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
 
-          <button onClick={handleAddPattern} style={{color: colorsComponent.Button}} className="hover:bg-gray-700 px-3 py-1 rounded text-sm transition-colors">
-            <IoAddOutline title="Add patterns" />
+          <button onClick={handleAddPattern} title="Add patterns" style={{color: colorsComponent.Button}} className="hover:bg-gray-700 px-3 py-1 rounded text-sm transition-colors">
+            <IoAddOutline />
           </button>
 
           <button onClick={handleClonePattern} title="Clone pattern" style={{color: colorsComponent.Button}} className=" hover:bg-gray-700 px-3 py-1 rounded text-sm transition-colors">

@@ -13,11 +13,10 @@ function createGrid(width = PATTERN_WIDTH) {
     return Array(width).fill(false);
 }
 
-export function buildPlaylistTracks(cols, rows, prev = []) {
+export function buildPlaylistTracks(rows, prev = []) {
     return Array.from({ length: rows }, (_, r) => ({
         id:   r,
         name: prev[r]?.name ?? `Track ${r + 1}`,
-        grid: Array.from({ length: cols }, (_, c) => prev[r]?.grid?.[c] ?? null),
     }));
 }
 
@@ -43,15 +42,15 @@ export function buildInitialState() {
             { id: 2, name: 'P2', steps: width, ch: channels.map(ch => ({ ...ch, grid: [...ch.grid], pianoData: [] })) },
         ],
 
-        // ── Playlist (source de vérité audio) ─────────────────────────────
+        // ── Playlist — source de vérité unique ────────────────────────────
         clips: [
-            { id: 1, patternId: 1, start: 0, track: 0, length: 1 },
+            { id: 1, patternId: 1, start: 0, track: 1, length: 1 },
         ],
 
-        // ── Playlist UI ───────────────────────────────────────────────────
-        pCols:         PLAYLIST_COLS,
-        pRows:         PLAYLIST_ROWS,
-        playlistTracks: buildPlaylistTracks(PLAYLIST_COLS, PLAYLIST_ROWS),
+        // ── Playlist UI (métadonnées uniquement, pas de grid) ─────────────
+        pCols:          PLAYLIST_COLS,
+        pRows:          PLAYLIST_ROWS,
+        playlistTracks: buildPlaylistTracks(PLAYLIST_ROWS),
 
         // ── Sélection timeline ────────────────────────────────────────────
         isSelecting:    false,
@@ -83,7 +82,20 @@ export const useChannelStore = create((set, get) => ({
     getCurrentChannel:    () => get().getCurrentPattern()?.ch.find(c => c.id === get().currentChannelID),
     getCurrentChannelUrl: () => get().getCurrentChannel()?.sampleUrl,
     getCurrentChannelName:() => get().getCurrentChannel()?.name,
-    getDuration: () => get().getCurrentChannel()?.duration,
+    getDuration:          () => get().getCurrentChannel()?.duration,
+
+    getTrackGrid: (row) => {
+        const { clips, pCols } = get();
+        const grid = Array(pCols).fill(null);
+        clips
+            .filter(c => c.track === row)
+            .forEach(c => {
+                for (let i = 0; i < c.length; i++) {
+                    if (c.start + i < pCols) grid[c.start + i] = c.patternId;
+                }
+            });
+        return grid;
+    },
 
     // ── Navigation (non-undoable) ─────────────────────────────────────────
     setCurrentPatternID:  (id) => set({ currentPatternID: id }),
@@ -106,34 +118,23 @@ export const useChannelStore = create((set, get) => ({
     },
 
     updateDuration: (patternId, channelId, newValue) => {
-        const {patterns} = get();
+        const { patterns } = get();
         get()._mutate({
-            patterns: patterns.map(p => p.id !== patternId ? p :{
+            patterns: patterns.map(p => p.id !== patternId ? p : {
                 ...p,
-                ch: p.ch.map(ch => ch.id !== channelId ?
-                    ch : {
-                        ...ch,
-                        duration: newValue
-                    }
-                )
-            })
-        })
-        console.log(newValue);
+                ch: p.ch.map(ch => ch.id !== channelId ? ch : { ...ch, duration: newValue }),
+            }),
+        });
     },
 
     updateMute: (patternId, channelId, muted) => {
-        const {patterns} = get();
+        const { patterns } = get();
         get()._mutate({
-            patterns: patterns.map(p => p.id !== patternId ? p :{
+            patterns: patterns.map(p => p.id !== patternId ? p : {
                 ...p,
-                ch: p.ch.map(ch => ch.id !== channelId ?
-                    ch : {
-                        ...ch,
-                        muted
-                    }
-                )
-            })
-        })
+                ch: p.ch.map(ch => ch.id !== channelId ? ch : { ...ch, muted }),
+            }),
+        });
     },
 
     clearCell: (patternId, channelId, cellIndex) => {
@@ -150,17 +151,16 @@ export const useChannelStore = create((set, get) => ({
     },
 
     clearSteps: (patternId, channelId) => {
-        const {patterns} = get();
-
+        const { patterns } = get();
         get()._mutate({
             patterns: patterns.map(p => p.id !== patternId ? p : {
                 ...p,
                 ch: p.ch.map(ch => ch.id !== channelId ? ch : {
                     ...ch,
-                    grid: ch.grid.map((n, i) => i >= 0 && i < 16 ? false : n)
-                })
-            })
-        })
+                    grid: ch.grid.map((n, i) => i >= 0 && i < 16 ? false : n),
+                }),
+            }),
+        });
     },
 
     fillSteps: (patternId, channelId, startIndex, n, value = true) => {
@@ -178,7 +178,6 @@ export const useChannelStore = create((set, get) => ({
                             const step = parseInt(n.split('/')[1], 10);
                             return (!isNaN(step) && i >= startIndex && (i - startIndex) % step === 2) ? value : null;
                         }
-                        //return cell;
                     }),
                 }),
             }),
@@ -201,53 +200,67 @@ export const useChannelStore = create((set, get) => ({
         get()._mutate({ patterns: [...patterns, { id: newId, name: `P${newId}`, steps: src.steps, ch }] });
     },
 
+    deletePattern: (patternId) => {
+        const { patterns, currentPatternID } = get();
+        const newPattern = patterns.filter(p => p.id !== patternId);
+        if (newPattern.length === 0) return;
+        const newId = currentPatternID === patternId
+            ? newPattern[newPattern.length - 1].id
+            : currentPatternID;
+        get()._mutate({ patterns: newPattern, currentPatternID: newId });
+    },
+
+    // ── Clips (source de vérité playlist) ────────────────────────────────
     placeClip: (track, colIdx, patternId) => {
-        const { clips, playlistTracks } = get();
+        const { clips } = get();
         const id = patternId ?? get().selectedPatternId;
         if (!id) return;
 
         const alreadyExists = clips.some(c => c.start === colIdx && c.track === track);
-        const newClips = alreadyExists ? clips : [
-            ...clips,
-            { id: Date.now(), patternId: id, start: colIdx, track, length: 1 },
-        ];
+        if (alreadyExists) return;
 
         get()._mutate({
-            clips: newClips,
-            playlistTracks: playlistTracks.map((t, r) => r !== track ? t : {
-                ...t,
-                grid: t.grid.map((v, c) => c === colIdx ? id : v),
-            }),
+            clips: [...clips, { id: Date.now(), patternId: id, start: colIdx, track, length: 1 }],
         });
     },
 
-    deletePattern: (patternId) => {
-    const {patterns, currentPatternID} = get();
-    const newPattern = patterns.filter(p => p.id !== patternId);
-    if (newPattern.length === 0) return;
-
-    const newId = currentPatternID === patternId ?
-        newPattern[newPattern.length - 1].id
-        : currentPatternID;
-        
-    get()._mutate({ patterns: newPattern, currentPatternID: newId });
+    resizeClip: (clipId, newLength) => {
+        const { clips } = get();
+        const clip = clips.find(c => c.id === clipId);
+        if (!clip) return;
+        get()._mutate({
+            clips: clips.map(c => c.id !== clipId ? c : { ...c, length: newLength }),
+        });
     },
 
+    removeClip: (track, colIdx) => {
+        const { clips } = get();
+        get()._mutate({
+            clips: clips.filter(c => !(c.start === colIdx && c.track === track)),
+        });
+    },
+
+    clearPlaylist: () => {
+        get()._mutate({ clips: [] });
+    },
+
+    // ── Dimensions ────────────────────────────────────────────────────────
     setPWidth: (newPWidth) => {
         const { pRows, playlistTracks } = get();
         get()._mutate({
             pCols: newPWidth,
-            playlistTracks: buildPlaylistTracks(newPWidth, pRows, playlistTracks),
+            playlistTracks: buildPlaylistTracks(pRows, playlistTracks),
         });
     },
 
     setPHeight: (newPHeight) => {
-        const { pCols, playlistTracks } = get();
+        const { playlistTracks } = get();
         get()._mutate({
             pRows: newPHeight,
-            playlistTracks: buildPlaylistTracks(pCols, newPHeight, playlistTracks),
+            playlistTracks: buildPlaylistTracks(newPHeight, playlistTracks),
         });
     },
+
     setWidth: (newWidth) => {
         const { patterns } = get();
         get()._mutate({
@@ -261,6 +274,16 @@ export const useChannelStore = create((set, get) => ({
                 }),
             })),
         });
+    },
+
+    setPCols: (value) => {
+        const { pRows, playlistTracks } = get();
+        get()._mutate({ pCols: value, playlistTracks: buildPlaylistTracks(pRows, playlistTracks) });
+    },
+
+    setPRows: (value) => {
+        const { playlistTracks } = get();
+        get()._mutate({ pRows: value, playlistTracks: buildPlaylistTracks(value, playlistTracks) });
     },
 
     // ── Channels ──────────────────────────────────────────────────────────
@@ -302,19 +325,19 @@ export const useChannelStore = create((set, get) => ({
     },
 
     loadSample: (e, patternID, channelId) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    get()._mutate({
-        patterns: get().patterns.map(p => p.id !== patternID ? p : {
-            ...p,
-            ch: p.ch.map(ch => {
-                if (ch.id !== channelId) return ch;
-                if (ch.sampleUrl?.startsWith('blob:')) URL.revokeObjectURL(ch.sampleUrl);
-                return { ...ch, sampleUrl: url };
+        const file = e.target.files[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        get()._mutate({
+            patterns: get().patterns.map(p => p.id !== patternID ? p : {
+                ...p,
+                ch: p.ch.map(ch => {
+                    if (ch.id !== channelId) return ch;
+                    if (ch.sampleUrl?.startsWith('blob:')) URL.revokeObjectURL(ch.sampleUrl);
+                    return { ...ch, sampleUrl: url };
+                }),
             }),
-        }),
-    });
+        });
     },
 
     resetSamples: () => {
@@ -329,58 +352,7 @@ export const useChannelStore = create((set, get) => ({
         });
     },
 
-   resizeClip: (clipId, newLength) => {
-    const { clips, playlistTracks } = get();
-    const clip = clips.find(c => c.id === clipId);
-    if (!clip) return;
-
-    const newClips = clips.map(c => c.id !== clipId ? c : { ...c, length: newLength });
-
-    const newTracks = playlistTracks.map((t, r) => r !== clip.track ? t : {
-        ...t,
-        grid: t.grid.map((v, c) => {
-            const wasInClip = c >= clip.start && c < clip.start + clip.length;
-
-            const isInNewClip = c >= clip.start && c < clip.start + newLength;
-            if (isInNewClip) return clip.patternId;
-            if (wasInClip) return null;
-            return v;
-        }),
-    });
-
-    get()._mutate({ clips: newClips, playlistTracks: newTracks });
-    },
-
-    removeClip: (track, colIdx) => {
-        const { clips, playlistTracks } = get();
-        get()._mutate({
-            clips: clips.filter(c => !(c.start === colIdx && c.track === track)),
-            playlistTracks: playlistTracks.map((t, r) => r !== track ? t : {
-                ...t,
-                grid: t.grid.map((v, c) => c === colIdx ? null : v),
-            }),
-        });
-    },
-
-    clearPlaylist: () => {
-        const { pCols, pRows } = get();
-        get()._mutate({
-            clips: [],
-            playlistTracks: buildPlaylistTracks(pCols, pRows),
-        });
-    },
-
     // ── Playlist UI ───────────────────────────────────────────────────────
-    setPCols: (value) => {
-        const { pRows, playlistTracks } = get();
-        get()._mutate({ pCols: value, playlistTracks: buildPlaylistTracks(value, pRows, playlistTracks) });
-    },
-
-    setPRows: (value) => {
-        const { pCols, playlistTracks } = get();
-        get()._mutate({ pRows: value, playlistTracks: buildPlaylistTracks(pCols, value, playlistTracks) });
-    },
-
     renameTrack: (trackId, newName) => {
         get()._mutate({
             playlistTracks: get().playlistTracks.map(t => t.id !== trackId ? t : { ...t, name: newName }),
@@ -394,7 +366,7 @@ export const useChannelStore = create((set, get) => ({
         selectionEnd:   end,
         selectedIds:    Array.from({ length: end - start + 1 }, (_, i) => start + i),
     }),
-    
+
     clearSelection: () => set({
         isSelecting:    false,
         startSelection: null,
@@ -410,37 +382,43 @@ export const useChannelStore = create((set, get) => ({
             pCols, pRows,
             patterns: patterns.map(p => ({
                 id: p.id, name: p.name,
-                channels: p.ch.map(ch => ({ id: ch.id, name: ch.name, grid: [...ch.grid], sampleUrl: ch.sampleUrl, pianoData: ch.pianoData, duration: ch.duration, muted: ch.muted })),
+                channels: p.ch.map(ch => ({
+                    id: ch.id, name: ch.name, grid: [...ch.grid],
+                    sampleUrl: ch.sampleUrl, pianoData: ch.pianoData,
+                    duration: ch.duration, muted: ch.muted,
+                })),
             })),
             clips: [...clips],
-            playlistTracks: playlistTracks.map(t => ({ ...t, grid: [...t.grid] })),
+            // On n'exporte plus playlistTracks.grid (dérivé à la volée)
+            playlistTracks: playlistTracks.map(t => ({ id: t.id, name: t.name })),
         };
     },
 
     setState: (data) => {
-    if (!data) return;
-    const pCols = data.pCols ?? PLAYLIST_COLS;
-    const pRows = data.pRows ?? PLAYLIST_ROWS;
-    set({
-        width:             data.width ?? PATTERN_WIDTH,
-        currentPatternID:  data.currentPatternID ?? 1,
-        selectedPatternId: data.selectedPatternId ?? null,
-        patterns: (data.patterns ?? []).map(p => ({
-            id: p.id, name: p.name,
-            steps: p.channels?.[0]?.grid?.length ?? PATTERN_WIDTH,
-            ch: p.channels.map(ch => ({
-                id: ch.id, name: ch.name,
-                grid: [...ch.grid],
-                sampleUrl: ch.sampleUrl ?? null,
-                pianoData: ch.pianoData ?? [],
-                duration: ch.duration
+        if (!data) return;
+        const pCols = data.pCols ?? PLAYLIST_COLS;
+        const pRows = data.pRows ?? PLAYLIST_ROWS;
+        set({
+            width:             data.width ?? PATTERN_WIDTH,
+            currentPatternID:  data.currentPatternID ?? 1,
+            selectedPatternId: data.selectedPatternId ?? null,
+            patterns: (data.patterns ?? []).map(p => ({
+                id: p.id, name: p.name,
+                steps: p.channels?.[0]?.grid?.length ?? PATTERN_WIDTH,
+                ch: p.channels.map(ch => ({
+                    id: ch.id, name: ch.name,
+                    grid: [...ch.grid],
+                    sampleUrl: ch.sampleUrl ?? null,
+                    pianoData: ch.pianoData ?? [],
+                    duration: ch.duration,
+                    muted: ch.muted ?? false,
+                })),
             })),
-        })),
-        clips: data.clips ?? [],
-        pCols,
-        pRows,
-        playlistTracks: buildPlaylistTracks(pCols, pRows, data.playlistTracks ?? []),
-    });
+            clips: data.clips ?? [],
+            pCols,
+            pRows,
+            playlistTracks: buildPlaylistTracks(pRows, data.playlistTracks ?? []),
+        });
     },
 
     reset: () => set(buildInitialState()),
