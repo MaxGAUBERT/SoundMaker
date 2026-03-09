@@ -176,7 +176,7 @@ export const useChannelStore = create((set, get) => ({
                         }
                         if (typeof n === 'string') {
                             const step = parseInt(n.split('/')[1], 10);
-                            return (!isNaN(step) && i >= startIndex && (i - startIndex) % step === 2) ? value : null;
+                            return (!isNaN(step) && i >= startIndex && (i - startIndex) % step === 0) ? value : null;
                         }
                     }),
                 }),
@@ -422,4 +422,5 @@ export const useChannelStore = create((set, get) => ({
     },
 
     reset: () => set(buildInitialState()),
+
 }));
