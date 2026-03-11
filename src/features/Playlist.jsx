@@ -178,8 +178,9 @@ const Playlist = memo(() => {
 
   const placePattern = useCallback(
     (r, c) => placePatternRaw(r, c, selectedPatternId),
-    [placePatternRaw]
+    [placePatternRaw, selectedPatternId]
   );
+
 
   const clearCell = useCallback(
     (r, c) => clearCellRaw(r, c),

@@ -84,10 +84,11 @@ const MeasureLabels = React.memo(({ cols, cellWidth }) => {
 const PianoRoll = () => {
   // ── Stores ────────────────────────────────────────────────────────────────
   const width = useChannelStore((s) => s.width);
-  const steps = useChannelStore((s) => s.steps);
   const setWidth = useChannelStore((s) => s.setWidth);
   const currentPatternID = useChannelStore(s => s.currentPatternID);
   const currentChannelID = useChannelStore(s => s.currentChannelID);
+
+
 
 
   const channel = useChannelStore(s => {
@@ -115,12 +116,12 @@ const PianoRoll = () => {
   const samplerRef = useRef(null);
 
   // ── État local (UI pure, pas besoin de store global) ─────────────────────
-  const { currentStep, isPlaying} = useTransport(); 
+  const { currentStep, isPlaying, mode: playMode} = useTransport(); 
   const [isResizingLocal, setIsResizingLocal] = useState(false);
   const [resizeMode,     setResizeMode]     = useState(null);
   const [initialMouseX,  setInitialMouseX]  = useState(0);
   const [initialNote,    setInitialNote]    = useState(null);
-
+  const playModeRef = useRef(playMode);
   // Refs
   const gridRef      = useRef(null);
   const viewportRef  = useRef(null);
@@ -129,6 +130,7 @@ const PianoRoll = () => {
   const paintThrottleRef = useRef(null);
 
   useEffect(() => { modeRef.current = mode; }, [mode]);
+  useEffect(() => {playModeRef.current = playMode;}, [playMode]);
 
   // ── Notes (lecture) ───────────────────────────────────────────────────────
   const currentNotes = useMemo(() => notes, [notes]);
@@ -452,7 +454,7 @@ const PianoRoll = () => {
             <div
               className="absolute bg-red-900 pointer-events-none z-10"
               style={{
-                left: `${currentStep * CELL_WIDTH}px`,
+                left: `${isPlaying && currentStep && playModeRef.current !== "song" ? currentStep * CELL_WIDTH : 0}px`,
                 width: `${CELL_WIDTH / 8}px`, height: `${ROWS * CELL_HEIGHT}px`,
                 transform: "translateZ(0)", transition: "left 0.1s linear",
               }}

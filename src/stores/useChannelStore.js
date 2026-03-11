@@ -210,17 +210,16 @@ export const useChannelStore = create((set, get) => ({
         get()._mutate({ patterns: newPattern, currentPatternID: newId });
     },
 
-    // ── Clips (source de vérité playlist) ────────────────────────────────
     placeClip: (track, colIdx, patternId) => {
-        const { clips, selectedPatternId } = get();
-        //const id = patternId ?? get().selectedPatternId;
-        if (!selectedPatternId) return;
+        const { clips } = get();
+        const id = patternId ?? get().selectedPatternId;
+        if (!id) return;
 
         const alreadyExists = clips.some(c => c.start === colIdx && c.track === track);
         if (alreadyExists) return;
 
         get()._mutate({
-            clips: [...clips, { id: Date.now(), patternId: selectedPatternId, start: colIdx, track, length: 1 }],
+            clips: [...clips, { id: Date.now(), patternId: id, start: colIdx, track, length: 1 }],
         });
     },
 
