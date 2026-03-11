@@ -160,6 +160,7 @@ const Playlist = memo(() => {
   const selectedIds     = useChannelStore(s => s.selectedIds);
   const setSelection    = useChannelStore(s => s.setSelection);
   const clearSelection  = useChannelStore(s => s.clearSelection);
+  const stopSelection = useChannelStore(s => s.stopSelection);
   const holdTimer       = useRef(null);
 
   const { colorsComponent } = useGlobalColorContext();
@@ -175,11 +176,9 @@ const Playlist = memo(() => {
     [playlistTracks, getTrackGrid, clips] 
   );
 
-  console.log("selected:", selectedPatternId, "current: ", currentPatternID)
-
   const placePattern = useCallback(
     (r, c) => placePatternRaw(r, c, selectedPatternId),
-    [placePatternRaw, selectedPatternId]
+    [placePatternRaw]
   );
 
   const clearCell = useCallback(
@@ -204,16 +203,16 @@ const Playlist = memo(() => {
     setSelection(from, to);
   }
 
-  useEffect(() => {
-    const stop = () => {
+   useEffect(() => {
+   const stop = () => {
       clearTimeout(holdTimer.current);
       isSelectingRef.current = false;
-    };
-    document.addEventListener("mouseup", stop);
-    return () => document.removeEventListener("mouseup", stop);
-  }, []);
+      stopSelection(); 
+   };
+   document.addEventListener("mouseup", stop);
+   return () => document.removeEventListener("mouseup", stop);
+   }, [stopSelection]);
 
-  // ── Header : pCols colonnes, chacune découpée en HEADER_PER_COL cellules ──
   const headerRow = useMemo(() => {
     const totalHeaderCells = pCols * HEADER_PER_COL;
     return (
@@ -221,7 +220,6 @@ const Playlist = memo(() => {
         style={{ borderColor: colorsComponent.Border, backgroundColor: colorsComponent.Background }}
         className="flex relative top-0 z-20 border-b"
       >
-        {/* Label vide aligné avec LABEL_W */}
         <div
           style={{ minWidth: LABEL_W, borderColor: colorsComponent.Border, color: colorsComponent.Text }}
           className="border-r flex items-center justify-center text-xs flex-shrink-0"

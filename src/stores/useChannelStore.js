@@ -55,7 +55,7 @@ export function buildInitialState() {
         // ── Sélection timeline ────────────────────────────────────────────
         isSelecting:    false,
         startSelection: null,
-        selectionEnd:   null,
+        selectionEnd:    null,
         selectedIds:    [],
 
         // ── Pattern sélectionné dans la palette ───────────────────────────
@@ -212,15 +212,15 @@ export const useChannelStore = create((set, get) => ({
 
     // ── Clips (source de vérité playlist) ────────────────────────────────
     placeClip: (track, colIdx, patternId) => {
-        const { clips } = get();
-        const id = patternId ?? get().selectedPatternId;
-        if (!id) return;
+        const { clips, selectedPatternId } = get();
+        //const id = patternId ?? get().selectedPatternId;
+        if (!selectedPatternId) return;
 
         const alreadyExists = clips.some(c => c.start === colIdx && c.track === track);
         if (alreadyExists) return;
 
         get()._mutate({
-            clips: [...clips, { id: Date.now(), patternId: id, start: colIdx, track, length: 1 }],
+            clips: [...clips, { id: Date.now(), patternId: selectedPatternId, start: colIdx, track, length: 1 }],
         });
     },
 
@@ -366,6 +366,8 @@ export const useChannelStore = create((set, get) => ({
         selectionEnd:   end,
         selectedIds:    Array.from({ length: end - start + 1 }, (_, i) => start + i),
     }),
+
+    stopSelection: () => set({ isSelecting: false }),
 
     clearSelection: () => set({
         isSelecting:    false,

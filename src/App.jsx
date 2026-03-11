@@ -100,7 +100,7 @@ function SplashScreen({ onStart }) {
       <motion.span
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 3.8, duration: 0.8 }}
+        transition={{ delay: 1.2, duration: 0.8 }}
         style={{
           position: 'absolute', bottom: 24, zIndex: 6,
           fontFamily: "'Courier New', monospace",
