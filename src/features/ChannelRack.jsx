@@ -330,15 +330,6 @@ export default function ChannelRack() {
             >
               <IoAddCircle title="Add channels" />
             </button>
-
-            <button
-              onClick={resetSamples}
-              disabled={currentPattern.ch.every(ch => ch.sampleUrl === null)}
-              style={{ color: colorsComponent.Text, backgroundColor: colorsComponent.Background }}
-              className="mt-4 ml-2 hover:bg-gray-700 px-4 py-2 rounded text-sm"
-            >
-              Reset samples
-            </button>
           </div>
         )}
       </div>

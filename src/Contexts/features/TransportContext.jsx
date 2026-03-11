@@ -106,7 +106,6 @@ export function TransportProvider({ children }) {
             const dur  = Tone.Time(ch.duration).toSeconds() * n.length;
             sampler.triggerAttackRelease(note, dur, time);
           });
-        return;
       }
 
       if (ch.grid?.[localStep] && !ch.muted) {
@@ -177,7 +176,6 @@ export function TransportProvider({ children }) {
           if (!pat) return;
 
           const localStep = (step - clipStart) % patternLength;
-          console.log(pat.ch);
           playChannels(pat.ch, localStep, time);
       });
 

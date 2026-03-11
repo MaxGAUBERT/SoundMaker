@@ -11,9 +11,8 @@ import { rowToNoteName }     from "../../features/PianoRoll/utils/noteUtils";
 import { useChannelStore }  from "../../stores/useChannelStore";
 import { usePianoRollStore } from "../../stores/usePianoRollStore";
 import { usePianoRollNotes } from "../../hooks/piano/usePianoRollNotes";
-import {usePianoRollAudio} from "../../hooks/piano/usePianoRollAudio";
+import { useTransport } from "../../Contexts/features/TransportContext";
 
-// constantes
 export const ROWS        = 48;
 export const CELL_WIDTH  = 20;
 export const CELL_HEIGHT = 20;
@@ -21,7 +20,7 @@ export const noteNames   = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"
 
 const MIN_WINDOW_PERCENT = 2;
 
-// sous composant 
+
 const GridLines = React.memo(({ rows, cols, cellWidth, cellHeight }) => {
   const hLines = useMemo(() => Array.from({ length: rows + 1 }, (_, i) => (
     <div
@@ -46,7 +45,7 @@ const GridLines = React.memo(({ rows, cols, cellWidth, cellHeight }) => {
   );
 });
 
-// sous composant mémoisé (cellules de grille)
+
 const VirtualizedCellGrid = React.memo(({ rows, cols, cellWidth, cellHeight, onCellMouseEnter, xToContent }) => {
   const handleMouseMove = useCallback((e) => {
     const rect     = e.currentTarget.getBoundingClientRect();
@@ -116,7 +115,7 @@ const PianoRoll = () => {
   const samplerRef = useRef(null);
 
   // ── État local (UI pure, pas besoin de store global) ─────────────────────
-  const [currentStep,    setCurrentStep]    = useState(0);
+  const { currentStep, isPlaying} = useTransport(); 
   const [isResizingLocal, setIsResizingLocal] = useState(false);
   const [resizeMode,     setResizeMode]     = useState(null);
   const [initialMouseX,  setInitialMouseX]  = useState(0);
@@ -130,11 +129,6 @@ const PianoRoll = () => {
   const paintThrottleRef = useRef(null);
 
   useEffect(() => { modeRef.current = mode; }, [mode]);
-
-  const { registerStepSetter } = usePianoRollAudio(steps);
-
-  // Enregistrer le setter de step pour l'audio hook
-   useEffect(() => { registerStepSetter(setCurrentStep); }, [registerStepSetter]);
 
   // ── Notes (lecture) ───────────────────────────────────────────────────────
   const currentNotes = useMemo(() => notes, [notes]);
