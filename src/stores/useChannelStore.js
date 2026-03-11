@@ -53,9 +53,10 @@ export function buildInitialState() {
         playlistTracks: buildPlaylistTracks(PLAYLIST_ROWS),
 
         // ── Sélection timeline ────────────────────────────────────────────
-        isSelecting:    false,
+        isDragging:     false,   // l'utilisateur est en train de glisser
+        isSelecting:    false,   // une boucle est définie et active pour le transport
         startSelection: null,
-        selectionEnd:    null,
+        selectionEnd:   null,
         selectedIds:    [],
 
         // ── Pattern sélectionné dans la palette ───────────────────────────
@@ -323,19 +324,19 @@ export const useChannelStore = create((set, get) => ({
         });
     },
 
-    loadSample: (e, patternID, channelId) => {
+    loadSample: (e, _patternID, channelId) => {
         const file = e.target.files[0];
         if (!file) return;
         const url = URL.createObjectURL(file);
         get()._mutate({
-            patterns: get().patterns.map(p => p.id !== patternID ? p : {
+            patterns: get().patterns.map(p => ({
                 ...p,
                 ch: p.ch.map(ch => {
                     if (ch.id !== channelId) return ch;
                     if (ch.sampleUrl?.startsWith('blob:')) URL.revokeObjectURL(ch.sampleUrl);
                     return { ...ch, sampleUrl: url };
                 }),
-            }),
+            })),
         });
     },
 
@@ -359,16 +360,21 @@ export const useChannelStore = create((set, get) => ({
     },
 
     // ── Sélection timeline ────────────────────────────────────────────────
-    setSelection: (start, end) => set({
-        isSelecting:    true,
-        startSelection: start,
-        selectionEnd:   end,
-        selectedIds:    Array.from({ length: end - start + 1 }, (_, i) => start + i),
-    }),
-
-    stopSelection: () => set({ isSelecting: false }),
+    setSelection: (start, end) => {
+        const s = Math.min(start, end);
+        const e = Math.max(start, end);
+        set({
+            isDragging:     true,
+            isSelecting:    true,  // boucle active dès la sélection
+            startSelection: s,
+            selectionEnd:   e,
+            selectedIds:    Array.from({ length: e - s + 1 }, (_, i) => s + i),
+        });
+    },
+    stopSelection: () => set({ isDragging: false }),
 
     clearSelection: () => set({
+        isDragging:     false,
         isSelecting:    false,
         startSelection: null,
         selectionEnd:   null,

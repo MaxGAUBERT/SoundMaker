@@ -155,13 +155,16 @@ const Playlist = memo(() => {
   const renameTracks      = useChannelStore(s => s.renameTrack);
 
   // ── Sélection ─────────────────────────────────────────────────────────────
-  const isSelectingRef  = useRef(false);
+  const isDragging      = useChannelStore(s => s.isDragging);
+  const isDraggingRef   = useRef(false);
   const startSelection  = useChannelStore(s => s.startSelection);
   const selectedIds     = useChannelStore(s => s.selectedIds);
   const setSelection    = useChannelStore(s => s.setSelection);
   const clearSelection  = useChannelStore(s => s.clearSelection);
-  const stopSelection = useChannelStore(s => s.stopSelection);
+  const stopSelection   = useChannelStore(s => s.stopSelection);
   const holdTimer       = useRef(null);
+
+  useEffect(() => { isDraggingRef.current = isDragging; }, [isDragging]);
 
   const { colorsComponent } = useGlobalColorContext();
   const { currentStep, isPlaying } = useTransport(); 
@@ -187,17 +190,15 @@ const Playlist = memo(() => {
     [clearCellRaw]
   );
 
-  // ── Sélection header : convertir index header → colonne pattern ───────────
   function handleMouseDown(headerIdx) {
     holdTimer.current = setTimeout(() => {
-      isSelectingRef.current = true;
       const col = Math.floor(headerIdx / HEADER_PER_COL);
-      setSelection(col, col);
+      setSelection(col, col);  
     }, 300);
   }
 
   function handleMouseEnter(headerIdx) {
-    if (!isSelectingRef.current) return;
+    if (!isDraggingRef.current) return;
     const col  = Math.floor(headerIdx / HEADER_PER_COL);
     const from = Math.min(startSelection ?? col, col);
     const to   = Math.max(startSelection ?? col, col);
@@ -207,8 +208,7 @@ const Playlist = memo(() => {
    useEffect(() => {
    const stop = () => {
       clearTimeout(holdTimer.current);
-      isSelectingRef.current = false;
-      stopSelection(); 
+      stopSelection();  // met isDragging:false, isSelecting reste true
    };
    document.addEventListener("mouseup", stop);
    return () => document.removeEventListener("mouseup", stop);

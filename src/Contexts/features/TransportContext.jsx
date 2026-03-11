@@ -1,4 +1,4 @@
-import { createContext, useContext, useRef, useReducer, useEffect, useCallback, useMemo } from "react";
+import { createContext, useContext, useRef, useReducer, useEffect, useCallback } from "react";
 import * as Tone from "tone";
 import { useChannels } from "./ChannelProvider";
 import { TRANSPORT_ACTIONS, initialState, transportReducer } from "../../reducers/transportReducer";
@@ -12,11 +12,12 @@ export function TransportProvider({ children }) {
 
   // ── Store unifié ──────────────────────────────────────────────────────────
   const { patterns, currentPatternID, width } = useChannels();
-  const clips         = useChannelStore(s => s.clips);
-  const pCols         = useChannelStore(s => s.pCols);
-  const isSelecting   = useChannelStore(s => s.isSelecting);
+  const clips          = useChannelStore(s => s.clips);
+  const pCols          = useChannelStore(s => s.pCols);
+  const isSelecting    = useChannelStore(s => s.isSelecting);
+  const setSelection   = useChannelStore(s => s.setSelection);
   const startSelection = useChannelStore(s => s.startSelection);
-  const selectionEnd  = useChannelStore(s => s.selectionEnd);
+  const selectionEnd   = useChannelStore(s => s.selectionEnd);
 
   // ── Refs audio ────────────────────────────────────────────────────────────
   const loopRef           = useRef(null);
@@ -24,7 +25,7 @@ export function TransportProvider({ children }) {
   const samplersRef       = useRef(new Map());
   const stepIndexRef      = useRef(0);
 
-  // ── Refs réactifs (lus dans le Tone.Loop sans re-créer la loop) ───────────
+  // ── Refs réactives (lues dans Tone.Loop sans recréer la loop) ─────────────
   const metronomeEnabledRef = useRef(state.metronomeEnabled);
   const modeRef             = useRef(state.mode);
   const widthRef            = useRef(width);
@@ -33,8 +34,9 @@ export function TransportProvider({ children }) {
   const clipsRef            = useRef(clips);
   const pColsRef            = useRef(pCols);
   const isSelectingRef      = useRef(isSelecting);
-  const startSelectionRef   = useRef(startSelection);
-  const selectionEndRef     = useRef(selectionEnd);
+  const setSelectionRef     = useRef(setSelection);
+  const startSelRef         = useRef(startSelection);
+  const endSelRef           = useRef(selectionEnd);
 
   useEffect(() => { metronomeEnabledRef.current = state.metronomeEnabled; }, [state.metronomeEnabled]);
   useEffect(() => { modeRef.current             = state.mode;             }, [state.mode]);
@@ -44,8 +46,10 @@ export function TransportProvider({ children }) {
   useEffect(() => { clipsRef.current            = clips;                  }, [clips]);
   useEffect(() => { pColsRef.current            = pCols;                  }, [pCols]);
   useEffect(() => { isSelectingRef.current      = isSelecting;            }, [isSelecting]);
-  useEffect(() => { startSelectionRef.current   = startSelection;         }, [startSelection]);
-  useEffect(() => { selectionEndRef.current     = selectionEnd;           }, [selectionEnd]);
+  useEffect(() => { setSelectionRef.current     = setSelection;           }, [setSelection]);
+  // FIX : dépendances correctes (la valeur, pas ref.current)
+  useEffect(() => { startSelRef.current         = startSelection;         }, [startSelection]);
+  useEffect(() => { endSelRef.current           = selectionEnd;           }, [selectionEnd]);
 
   // ── Chargement des samplers (pattern courant) ─────────────────────────────
   useEffect(() => {
@@ -133,15 +137,13 @@ export function TransportProvider({ children }) {
       await Tone.start();
 
       loopRef.current = new Tone.Loop((time) => {
-        const mode       = modeRef.current;
-        const w          = widthRef.current;
-        const curPatId   = currentPatternIDRef.current;
-        const clips      = clipsRef.current;
-        const selecting  = isSelectingRef.current;
-        const selStart   = startSelectionRef.current;
-        const selEnd     = selectionEndRef.current;
+        const mode      = modeRef.current;
+        const w         = widthRef.current;
+        const curPatId  = currentPatternIDRef.current;
+        const clips     = clipsRef.current;
+        const selecting = isSelectingRef.current;
 
-        let step = stepIndexRef.current;
+        const step = stepIndexRef.current;
 
         // ── Pattern mode ────────────────────────────────────────────────
         if (mode === "pattern") {
@@ -162,39 +164,37 @@ export function TransportProvider({ children }) {
 
         // ── Song mode ───────────────────────────────────────────────────
         if (mode === "song") {
-          console.log("mode:", mode, "step:", step);
           const patternLength = w;
-  
+
           clips.forEach(clip => {
-          const { patternId, start, length } = clip;
-          const clipStart = start * patternLength;
-          const clipEnd   = clipStart + length * patternLength;
+            const { patternId, start, length } = clip;
+            const clipStart = start * patternLength;
+            const clipEnd   = clipStart + length * patternLength;
 
-          if (step < clipStart || step >= clipEnd) return;
+            if (step < clipStart || step >= clipEnd) return;
 
-          const pat = patternsRef.current.find(p => p.id === patternId); 
-          if (!pat) return;
+            const pat = patternsRef.current.find(p => p.id === patternId);
+            if (!pat) return;
 
-          const localStep = (step - clipStart) % patternLength;
-          playChannels(pat.ch, localStep, time);
-      });
+            const localStep = (step - clipStart) % patternLength;
+            playChannels(pat.ch, localStep, time);
+          });
 
-          const n = step + 1;
+          const nextRaw = step + 1;
           let nextStep;
 
-          if (selecting && selStart !== null && selEnd !== null) {
-  
-          const startStep = selStart * patternLength;
-          const endStep   = (selEnd + 1) * patternLength;
-          nextStep = n >= endStep ? startStep : n;
+          const selStart = startSelRef.current;
+          const selEnd   = endSelRef.current;
 
-        } else {
-          nextStep = n;
-        }
+          if (selecting && selStart !== null && selEnd !== null) {
+            const loopStart = selStart * patternLength;
+            const loopEnd   = (selEnd + 1) * patternLength;
+            nextStep = nextRaw >= loopEnd ? loopStart : nextRaw;
+          } else {
+            nextStep = nextRaw;
+          }
 
           stepIndexRef.current = nextStep;
-
-          console.log(stepIndexRef.current);
 
           Tone.Draw.schedule(() => {
             dispatch({ type: TRANSPORT_ACTIONS.SET_CURRENT_STEP, payload: nextStep });
@@ -221,7 +221,11 @@ export function TransportProvider({ children }) {
   const pause = useCallback(() => dispatch({ type: TRANSPORT_ACTIONS.PAUSE }), []);
 
   const stop = useCallback(() => {
-    stepIndexRef.current = isSelecting && startSelection !== null ? startSelection : 0;
+    // FIX : on repart du début de la sélection si active
+    stepIndexRef.current =
+      isSelecting && startSelection !== null
+        ? startSelection * widthRef.current
+        : 0;
     dispatch({ type: TRANSPORT_ACTIONS.STOP });
   }, [isSelecting, startSelection]);
 
