@@ -5,6 +5,21 @@ html, body, #root {
   margin: 0;
 }
 
+@layer utilities {
+  .custom-scroll {
+    scrollbar-width: medium;
+    scrollbar-color: theme('colors.black') theme('colors.gray.100');
+  }
+
+  .custom-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scroll::-webkit-scrollbar-thumb {
+    @apply bg-indigo-400 rounded-full;
+  }
+}
+
 /* gouttière horizontale entre les colonnes */
 .gutter.gutter-horizontal {
   cursor: col-resize;

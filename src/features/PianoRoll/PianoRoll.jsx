@@ -404,7 +404,7 @@ const PianoRoll = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-gray-900 text-white rounded-xl min-h-0">
+    <div className="bg-gray-900 text-white rounded-xl min-h-0 custom-scroll">
       <TopBar
         selectedInstrument={channel}
         selectedPattern={currentPatternID}
@@ -428,7 +428,7 @@ const PianoRoll = () => {
       <div className="flex">
         <NoteLabels noteLabels={noteLabels} handlePlaySound={handlePlaySound} isBlackKey={isBlackKey} />
 
-        <div className="relative w-full overflow-hidden" ref={viewportRef}>
+        <div className="relative w-full" ref={viewportRef}>
           {/* Mesures */}
           <div
             className="relative"

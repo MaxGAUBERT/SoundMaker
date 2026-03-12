@@ -208,7 +208,7 @@ const Playlist = memo(() => {
    useEffect(() => {
    const stop = () => {
       clearTimeout(holdTimer.current);
-      stopSelection();  // met isDragging:false, isSelecting reste true
+      stopSelection();  
    };
    document.addEventListener("mouseup", stop);
    return () => document.removeEventListener("mouseup", stop);
@@ -285,7 +285,7 @@ const Playlist = memo(() => {
           </div>
         </div>
 
-        <div className="flex gap-2 flex-row overflow-auto">
+           <div className="flex gap-2 flex-row overflow-auto">
           <span className="text-gray-400 text-xs">Patterns:</span>
           {patterns.map(p => (
             <button
@@ -309,7 +309,7 @@ const Playlist = memo(() => {
       </div>
 
       {/* Scrollable grid */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto custom-scroll">
         <div className="relative inline-block min-w-full">
           <Playhead step={currentStep} patternLength={width} isPlaying={isPlaying} />
           {headerRow}

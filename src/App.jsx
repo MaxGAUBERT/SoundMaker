@@ -205,7 +205,7 @@ function DisintegrationReveal({ children }) {
 export default function App() {
   const [started, setStarted] = useState(false);
 
-  const [leftWidth,   setLeftWidth]   = useState(60);
+  const [leftWidth,   setLeftWidth]   = useState(70);
   const [isDraggingH, setIsDraggingH] = useState(false);
   const [topHeight,   setTopHeight]   = useState(50);
   const [isDraggingV, setIsDraggingV] = useState(false);
