@@ -26,13 +26,13 @@ html, body, #root {
 }
 
 *::-webkit-scrollbar-track {
-  background: orange;
+  background: black;
 }
 
 *::-webkit-scrollbar-thumb {
   background-color: gray;
   border-radius: 10px;
-  border: 1px solid orange;
+  border: 2px solid black;
 }
 
 
