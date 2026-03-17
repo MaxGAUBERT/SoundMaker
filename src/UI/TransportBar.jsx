@@ -4,10 +4,13 @@ import { PiMetronomeFill } from "react-icons/pi";
 import { SlLoop } from "react-icons/sl";
 import { FaItunesNote } from "react-icons/fa";
 import { BiSolidPlaylist } from "react-icons/bi";
+import { useSettings } from "../Contexts/system/SettingsContexts";
 
 export default function TransportBar(){
     const { play, isPlaying, pause, stop, toggleMetronome, metronomeEnabled,
-        toggleLoop, loopEnabled, bpm, setBpm, mode, setMode} = useTransport();
+        toggleLoop, loopEnabled, mode, setMode} = useTransport();
+    
+        const {settings, updateSetting} = useSettings();
 
     return (
     
@@ -59,16 +62,11 @@ export default function TransportBar(){
 
                 <input
                     type="number"
-                    value={bpm}
+                    value={settings.bpm}
                     min={1}
                     max={300}
                     step={1}
-                    onChange={(e) => {
-                        let v = Number(e.target.value);
-                        if (Number.isNaN(v)) return;
-                        v = Math.max(1, Math.min(300, v));
-                        setBpm(v);
-                }}
+                    onChange={(e) => updateSetting("bpm", Number(e.target.value))}
                     />
             </div>
     

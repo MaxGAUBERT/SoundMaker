@@ -4,7 +4,6 @@ const SettingsContext = createContext(null);
 
 export function SettingsProvider({ children }) {
   
-  // Charger les settings depuis localStorage ou utiliser les valeurs par défaut
   const [settings, setSettings] = useState(() => {
     if (typeof window === "undefined") {
       return {

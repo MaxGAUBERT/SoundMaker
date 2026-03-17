@@ -6,12 +6,15 @@ import useProjectManager from "../../hooks/system/useProjectManager";
 import NewProjectModal from "../../UI/Modals/NewProjectModal";
 import LoadProjectModal from "../../UI/Modals/LoadProjectModal";
 import SaveAsProjectModal from "../../UI/Modals/SaveAsProjectModal";
+import Settings from "../../UI/Modals/Settings";
+import { useSettings } from "./SettingsContexts";
 
 const MenuActionsContext = createContext(null);
 
 export function MenuActionsProvider({ children }) {
 
   const { undo, redo, canUndo, canRedo } = useChannels();
+  const {settings} = useSettings();
 
   const { save, saveAs, load, newProject } = useProjectManager(); 
 
@@ -80,6 +83,16 @@ export function MenuActionsProvider({ children }) {
             saveAs(name);   
             close("SaveAs");
           }}
+        />
+      )}
+
+      {/* Settings */}
+      {showModal.Settings && (
+        <Settings 
+          open={() => open("Settings")}
+          onClose={() => close("Settings")}
+          initialTab
+          title="Settings"
         />
       )}
 

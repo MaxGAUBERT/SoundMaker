@@ -3,8 +3,6 @@ import { createContext, useContext, useState, useEffect, useMemo } from "react";
 // Contexte
 const ThemeContext = createContext(null);
 
-// Provider principal, sans next-themes,
-// version compatible Vite / Vercel / React
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
     if (typeof window === "undefined") return "light";

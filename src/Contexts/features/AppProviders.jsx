@@ -8,6 +8,8 @@ import { StorageProvider } from '../system/StorageContext';
 import { UndoManagerProvider } from '../system/UndoManagerContext';
 import { UndoManagerBridge } from '../system/UndoManagerBridge';
 import { HistoryProvider } from '../system/HistoryProvider';
+import { SettingsProvider } from '../system/SettingsContexts';
+import {ThemeProvider} from '../../Contexts/UI/ThemeContext';
 
 function KeyboardShortcutsWrapper({ children }) {
   useKeyboardShortcuts(); 
@@ -17,7 +19,10 @@ function KeyboardShortcutsWrapper({ children }) {
 
 export default function AppProviders({ children }) {
   return (
+    
     <StorageProvider>
+      <ThemeProvider>
+       <SettingsProvider>
       <HistoryProvider>
       <GlobalColorContextProvider>
         <UndoManagerProvider>
@@ -35,6 +40,8 @@ export default function AppProviders({ children }) {
         </UndoManagerProvider>
       </GlobalColorContextProvider>
       </HistoryProvider>
+        </SettingsProvider>
+        </ThemeProvider>
     </StorageProvider>
   );
 }

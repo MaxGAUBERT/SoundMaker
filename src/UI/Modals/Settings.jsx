@@ -5,7 +5,8 @@ import { IoMdSettings } from "react-icons/io";
 import { FaRegKeyboard } from "react-icons/fa";
 import { IoMdHome } from "react-icons/io";
 import { FcAbout } from "react-icons/fc";
-
+import { useSettings } from "../../Contexts/system/SettingsContexts";
+import { useTheme } from "../../Contexts/UI/ThemeContext";
 
 function classNames(...arr){ return arr.filter(Boolean).join(" "); }
 
@@ -13,12 +14,13 @@ function Settings({
   open,
   onClose,
   initialTab = "general",
-  tabs: tabsProp,
   title = "Settings",
 }) {
   const [active, setActive] = useState(initialTab);
   const overlayRef = useRef(null);
   const firstFocusableRef = useRef(null);
+  const {settings, updateSetting} = useSettings();
+  const {theme} = useTheme();
 
   useEffect(() => { setActive(initialTab); }, [initialTab]);
 
@@ -37,10 +39,11 @@ function Settings({
 
   if (!open) return null;
 
-  const tabs = tabsProp ?? [
+  const tabs = [
   {
     id: "general",
     label: "General",
+    
     content: (
       <div className="flex flex-col gap-4">
        <select
@@ -66,6 +69,7 @@ function Settings({
         </label>
       </div>
     ),
+  
   },
   {
     id: "audio",
@@ -88,7 +92,7 @@ function Settings({
           <input
             type="number"
             className="bg-black/40 border rounded p-1"
-            value={settings.channels}
+            value={null}
             onChange={(e) => updateSetting("channels", Number(e.target.value))}
           />
           <span>Number of default channels</span>
@@ -106,19 +110,40 @@ function Settings({
       <div className="flex flex-col gap-4">
         <div className="flex justify-between">
           <span>Play / Pause</span>
-          <kbd className="px-2 py-1 bg-gray-800 rounded">Space</kbd>
+          <kbd className="px-2 py-1 bg-gray-100 rounded">Space / P</kbd>
         </div>
+
+        <div className="flex justify-between">
+          <span>Stop</span>
+          <kbd className="px-2 py-1 bg-gray-100 rounded">S</kbd>
+        </div>
+
         <div className="flex justify-between">
           <span>Undo</span>
-          <kbd className="px-2 py-1 bg-gray-800 rounded">Ctrl + Z</kbd>
+          <kbd className="px-2 py-1 bg-gray-100 rounded">Ctrl + Z</kbd>
         </div>
         <div className="flex justify-between">
           <span>Redo</span>
-          <kbd className="px-2 py-1 bg-gray-800 rounded">Ctrl + Y</kbd>
+          <kbd className="px-2 py-1 bg-gray-100 rounded">Ctrl + Y</kbd>
         </div>
         <div className="flex justify-between">
-          <span>Ouvrir Piano Roll</span>
-          <kbd className="px-2 py-1 bg-gray-800 rounded">P</kbd>
+          <span>New Project</span>
+          <kbd className="px-2 py-1 bg-gray-100 rounded">Alt + N</kbd>
+        </div>
+
+        <div className="flex justify-between">
+          <span>Save As Project</span>
+          <kbd className="px-2 py-1 bg-gray-100 rounded">Alt + S</kbd>
+        </div>
+
+        <div className="flex justify-between">
+          <span>Load Project</span>
+          <kbd className="px-2 py-1 bg-gray-100 rounded">Alt + L</kbd>
+        </div>
+
+        <div className="flex justify-between">
+          <span>Toggle Song/Pattern Mode</span>
+          <kbd className="px-2 py-1 bg-gray-100 rounded">T</kbd>
         </div>
       </div>
     ),
@@ -129,9 +154,9 @@ function Settings({
     content: (
       <div className="flex flex-col gap-2 text-sm">
         <p>
-          <strong>Dream Sequencer</strong> v0.1
+          <strong>Sound Maker</strong> v0.1
         </p>
-        <p>Un séquenceur React + Tone.js inspiré de FL Studio.</p>
+        <p>A powerfull digital audio workstation</p>
       </div>
     ),
   },

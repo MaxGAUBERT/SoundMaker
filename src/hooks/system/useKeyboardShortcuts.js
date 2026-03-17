@@ -37,7 +37,7 @@ export function useKeyboardShortcuts() {
       if (e.altKey && e.key === 'l')                 { e.preventDefault(); actions["Load Project"](); }
       if (e.altKey && e.key === 's' && !e.shiftKey)  { e.preventDefault(); actions["Save As"](); }
       if (e.altKey && e.key === 's' && e.shiftKey)   { e.preventDefault(); actions["Save"](); }
-      if (e.altKey && e.shiftKey && e.key === 'p')   { e.preventDefault(); actions["Settings"](); }
+      if (e.altKey && e.key === ":")   { e.preventDefault(); actions["Settings"](); }
       if (e.altKey && e.key === 'F4')                { e.preventDefault(); actions["Exit"](); }
     };
 
