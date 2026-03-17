@@ -14,9 +14,8 @@ function clampRange(range, minWidth) {
 export default function ZoomBarTW({
   windowRange,
   setWindowRange,
-  minWindowPercent = 2,
+  minWindowPercent = 4,
 }) {
-  // Valeur sûre si windowRange est undefined / mal formé
   const safeRange = Array.isArray(windowRange) && windowRange.length === 2
     ? windowRange
     : [0, 100];
@@ -60,7 +59,6 @@ export default function ZoomBarTW({
     };
   }, [pxToPercent, setWindowRange, minWindowPercent]);
 
-  // Wheel — monté une fois, lit rangeRef
   useEffect(() => {
     const el = barRef.current;
     if (!el) return;

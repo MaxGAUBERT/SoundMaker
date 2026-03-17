@@ -12,7 +12,7 @@ const initialState = {
   initialMouseX:   0,
   initialNote:     null,
   // Zoom
-  windowRange:     [0, 100],
+  windowRange:     [0, 150],
   // Chord
   selectedChordType: "major",
 };

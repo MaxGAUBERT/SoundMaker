@@ -309,7 +309,7 @@ const Playlist = memo(() => {
       </div>
 
       {/* Scrollable grid */}
-      <div className="flex-1 overflow-auto custom-scroll">
+      <div className="flex-1 overflow-auto">
         <div className="relative inline-block min-w-full">
           <Playhead step={currentStep} patternLength={width} isPlaying={isPlaying} />
           {headerRow}

@@ -404,7 +404,7 @@ const PianoRoll = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-gray-900 text-white rounded-xl min-h-0 custom-scroll">
+    <div className="bg-gray-900 text-white rounded-xl min-h-0 overflow-auto">
       <TopBar
         selectedInstrument={channel}
         selectedPattern={currentPatternID}

@@ -314,7 +314,7 @@ export default function App() {
                     </div>
 
                     {/* Piano Roll */}
-                    <div className="flex-1 overflow-auto">
+                    <div className="flex-1">
                       <PianoRoll />
                     </div>
                   </div>

@@ -288,7 +288,7 @@ export default function ChannelRack() {
       </div>
 
       {/* Contenu scrollable */}
-      <div className="flex-1 overflow-hidden custom-scroll p-2">
+      <div className="flex-1 p-2">
         {currentPattern && (
           <div>
             <div className="overflow-x-auto">

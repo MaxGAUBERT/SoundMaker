@@ -38,6 +38,7 @@
     "tone": "^15.0.4",
     "use-history": "^1.4.1",
     "use-undo": "^1.1.1",
+    "webkit": "^0.0.0",
     "zustand": "^5.0.11"
   },
   "devDependencies": {
